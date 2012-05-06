@@ -36,14 +36,12 @@ enum base_emitter_control_types
     BUTTERFLY_CURVE_XY , BUTTERFLY_CURVE_XZ , BUTTERFLY_CURVE_YZ ,
     LOG_SPIRAL_XY , LOG_SPIRAL_XZ , LOG_SPIRAL_YZ ,
     
-    SINE_WAVE_Y_TO_X , 
+    SINE_WAVE_Y_TO_X , TAN_GRAPH_Y_TO_X , COSH_GRAPH_Y_TO_X ,
+    RED_TO_YELLOW , YELLOW_TO_BLUE , BLUE_TO_RED ,
+    
+    COLORED_SINE , COLORED_TAN , COLORED_COSH ,
     
     ENUM_END
-};
-
-enum spawner_types
-{
-    RANDOM_POS , RANDOM_VEL , RANDOM_ACC , RANDOM_FULL
 };
 
 typedef struct {
@@ -52,7 +50,7 @@ typedef struct {
 } pos_color;
 
 typedef void (*fptr)(vector<particle>::iterator, const double&);
-typedef particle (*sptr)(const double&);
+//typedef particle (*sptr)(const double&);
 
 class emitter {
 public:
@@ -73,6 +71,7 @@ public:
         sampler_loc,
         vao,
         vbo_part,
+        vbo_color,
         tex_id,
         part_size,
         vel_offset,
@@ -100,7 +99,7 @@ public:
     
     vector<particle> parts;
     vector<fptr> active_controllers;
-    sptr spawn_controller;
+    uint32_t spawn_controller;
     
     
     //////////////////
@@ -128,6 +127,9 @@ public:
     void toggle_active();
     void active_off();
     void active_on();
+    
+    void next_spawn_controller();
+    void prev_spawn_controller();
     
     
     //////////////////////

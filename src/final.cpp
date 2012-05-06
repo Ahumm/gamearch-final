@@ -15,8 +15,8 @@
 #include "emitter/emitter.h"
 #include "utils/utils.h"
 
-int current_width = 800,
-	current_height = 450;
+int current_width = 1200,
+	current_height = 675;
     
 sf::Window* window = NULL;
 sf::Clock* wclock = NULL;
@@ -31,26 +31,25 @@ vector<emitter> emitters;
 double thistime, oldtime, dt, starttime;
 
 // MASS OF CAMERA LOCATIONS (PROBABLY SHOULD JUST ADD CAMERA CONTROLS)
-glm::vec3 camera_positions[30] = { glm::vec3(2.0f,2.0f,2.0f), glm::vec3(5.0f,5.0f,5.0f),
-                                   glm::vec3(10.0f,10.0f,10.0f), glm::vec3(2.0f,-2.0f,2.0f),
-                                   glm::vec3(5.0f,-5.0f,5.0f),glm::vec3(10.0f,-10.0f,10.0f), 
-                                   glm::vec3(-2.0f,2.0f,2.0f), glm::vec3(-5.0f,5.0f,5.0f),
-                                   glm::vec3(-10.0f,10.0f,10.0f), glm::vec3(2.0f,2.0f,-2.0f),
-                                   glm::vec3(5.0f,5.0f,-5.0f), glm::vec3(10.0f,10.0f,-10.0f), 
-                                   glm::vec3(-2.0f,-2.0f,2.0f), glm::vec3(-5.0f,-5.0f,5.0f),
-                                   glm::vec3(-10.0f,-10.0f,10.0f), glm::vec3(-2.0f,2.0f,-2.0f), 
-                                   glm::vec3(-5.0f,5.0f,-5.0f), glm::vec3(-10.0f,10.0f,-10.0f), 
-                                   glm::vec3(2.0f,-2.0f,-2.0f), glm::vec3(5.0f,-5.0f,-5.0f),
-                                   glm::vec3(10.0f,-10.0f,-10.0f), glm::vec3(-2.0f,-2.0f,-2.0f),
-                                   glm::vec3(-5.0f,-5.0f,-5.0f), glm::vec3(-10.0f,-10.0f,-10.0f),
-                                   glm::vec3(5.0f,0.0f,0.0f), glm::vec3(5.0f,5.0f,0.0f), 
-                                   glm::vec3(0.0f,5.0f,0.0f), glm::vec3(0.0f,5.0f,5.0f), 
-                                   glm::vec3(0.0f,0.0f,5.0f), glm::vec3(5.0f,0.0f,5.0f) };
+glm::vec3 camera_positions[27] = { glm::vec3(-2.0f,-2.0f,-2.0f), glm::vec3(-2.0f,-2.0f, 0.0f),
+                                   glm::vec3(-2.0f,-2.0f, 2.0f), glm::vec3(-2.0f, 0.0f,-2.0f),
+                                   glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(-2.0f, 0.0f, 2.0f),
+                                   glm::vec3(-2.0f, 2.0f,-2.0f), glm::vec3(-2.0f, 2.0f, 0.0f),
+                                   glm::vec3(-2.0f, 2.0f, 2.0f), glm::vec3( 0.0f,-2.0f,-2.0f),
+                                   glm::vec3( 0.0f,-2.0f, 0.0f), glm::vec3( 0.0f,-2.0f, 2.0f),
+                                   glm::vec3( 0.0f, 0.0f,-2.0f), glm::vec3( 0.0f, 0.0f, 0.0f),
+                                   glm::vec3( 0.0f, 0.0f, 2.0f), glm::vec3( 0.0f, 2.0f,-2.0f),
+                                   glm::vec3( 0.0f, 2.0f, 0.0f), glm::vec3( 0.0f, 2.0f, 2.0f),
+                                   glm::vec3( 2.0f,-2.0f,-2.0f), glm::vec3( 2.0f,-2.0f, 0.0f),
+                                   glm::vec3( 2.0f,-2.0f, 2.0f), glm::vec3( 2.0f, 0.0f,-2.0f),
+                                   glm::vec3( 2.0f, 0.0f, 0.0f), glm::vec3( 2.0f, 0.0f, 2.0f),
+                                   glm::vec3( 2.0f, 2.0f,-2.0f), glm::vec3( 2.0f, 2.0f, 0.0f),
+                                   glm::vec3( 2.0f, 2.0f, 2.0f)  };
 
-uint32_t selected_camera = 2;
-uint32_t num_cams = 30;
+uint32_t selected_camera = 0;
+uint32_t num_cams = 27;
 
-float camera_scale = 1.0f;
+float camera_scale = 5.0f;
 
 //glm::vec3 campos = glm::vec3(0.0,-10.0,15.0);
 glm::vec3 campos = camera_positions[selected_camera] * camera_scale;//glm::vec3(0.0,-10.0,15.0);
@@ -90,7 +89,12 @@ int main(int argc, char* argv[])
     spawn_emitter("textures/particle.png", 100, 50);    // 0
     spawn_emitter("textures/particle.png", 10, 50);     // 1
     spawn_emitter("textures/particle.png", 300, 20);    // 2
-    spawn_emitter("textures/particle.png", 300, 60);   // 3
+    spawn_emitter("textures/particle.png", 300, 60);    // 3
+    
+    emitters[0].set_base_color(1.0f,0.0f,0.0f,1.0f);
+    emitters[1].set_base_color(0.0f,1.0f,0.0f,1.0f);
+    emitters[2].set_base_color(0.0f,0.0f,1.0f,1.0f);
+    emitters[3].set_base_color(1.0f,1.0f,1.0f,1.0f);
     
     game_loop();
 	
@@ -133,7 +137,7 @@ void initialize(int& argc, char* argv[])
 		glewGetString(GLEW_VERSION) 
 	);
 
-	glClearColor(0.0f, 1.0f, 1.0f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	on_gl_error("Clear color");
 	glEnable(GL_DEPTH_TEST);
 	on_gl_error("Depth test");
@@ -284,8 +288,28 @@ bool handle_keys(const sf::Event& event)
     }
     else if(event.key.code == sf::Keyboard::RControl)
     {
-         camera_scale = (camera_scale == 1.0f) ? 2.0f : (camera_scale == 2.0f) ? 3.0f : 1.0f;
-         campos = camera_positions[selected_camera] * camera_scale;
+        camera_scale = (camera_scale == 5.0f) ? 10.0f : (camera_scale == 10.0f) ? 1.0f : (camera_scale == 1.0f) ? 3.0f : 5.0f;
+        campos = camera_positions[selected_camera] * camera_scale;
+    }
+    else if(event.key.code == sf::Keyboard::Equal)
+    {
+        if(!on_models)
+        {
+            if(!(emitter_index < 0 || emitter_index >= emitters.size()))
+            {
+                if(emitters[emitter_index].thickness < 8.0f) emitters[emitter_index].thickness *= 2.0f;
+            }
+        }
+    }
+    else if(event.key.code == sf::Keyboard::Dash)
+    {
+        if(!on_models)
+        {
+            if(!(emitter_index < 0 || emitter_index >= emitters.size()))
+            {
+                if(emitters[emitter_index].thickness > 1.0f) emitters[emitter_index].thickness /= 2.0f;
+            }
+        }
     }
     
     return false;
@@ -314,9 +338,7 @@ void update_function(const double& delta_time)
     {
         if(!(model_index < 0))
         {
-            fprintf(stdout, "1: %f ::: 2: %f ::: 3: %f \n", campos.x,campos.y,campos.z);
             string co_ord = "( " + float_to_string(campos.x) + " , " + float_to_string(campos.y) + " , " + float_to_string(campos.z) + " )";
-//string co_ord = "";//"( " + int_to_string(((int)campos[0])) + " , " + int_to_string(((int)campos[1])) + " , " + int_to_string(((int)campos[3])) + " )";
             window_title = window_title_base + " - " + co_ord + " - Model" + int_to_string(model_index);
             if(!models[model_index].active) window_title = window_title + " - InActive";
         }

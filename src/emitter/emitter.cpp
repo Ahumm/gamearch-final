@@ -20,7 +20,7 @@ using namespace std;
 
 emitter::emitter()
  : base_color({0.0f, 0.0f, 0.0f, 1.0f}), texture("particle.png"), particle_lifespan(1000.0), generation_speed(10), particle_count(0), spawn_radius(1.0f),
-    thickness(20.0f), active(false)
+    thickness(10.0f), active(false)
 {
     model_matrix = glm::mat4(1.0f);
     frame_matrix = model_matrix;
@@ -33,16 +33,13 @@ emitter::emitter()
     controller = NO_CONTROLLER;
     current_controller_name = "NO_CONTROLLER";
     
-    spawn_controller = spawner::random_pos;
-    //spawn_controller = spawner::random_vel;
-    //spawn_controller = spawner::random_acc;
-    //spawn_controller = spawner::random_full;
+    spawn_controller = 0;
 }
 
 // TAKES LIFESPAN IN SECONDS
 emitter::emitter(const char* texture_file, const double& lifespan, const uint32_t& spawn_speed)
  : base_color({0.0f, 0.0f, 0.0f, 1.0f}), texture(texture_file), particle_lifespan(1000.0 * lifespan),
-    generation_speed(spawn_speed), particle_count(0), spawn_radius(1.0f), thickness(20.0f), active(true)
+    generation_speed(spawn_speed), particle_count(0), spawn_radius(1.0f), thickness(10.0f), active(true)
 {
     model_matrix = glm::mat4(1.0f);
     frame_matrix = model_matrix;
@@ -55,10 +52,7 @@ emitter::emitter(const char* texture_file, const double& lifespan, const uint32_
     controller = NO_CONTROLLER;
     current_controller_name = "NO_CONTROLLER";
     
-    spawn_controller = spawner::random_pos;
-    //spawn_controller = spawner::random_vel;
-    //spawn_controller = spawner::random_acc;
-    //spawn_controller = spawner::random_full;
+    spawn_controller = 0;
 }
 
 emitter::emitter(const emitter& other)
@@ -93,8 +87,6 @@ void emitter::init()
     lifespan_offset     = color_offset      + (GLuint)sizeof(p.p_color       );
     alive_time_offset   = lifespan_offset   + (GLuint)sizeof(p.p_lifespan    );
     
-    //fprintf(stdout, "P_S : %u : V_O : %u : A_O : %u : C_O : %u : L_O : %u : A_T_O : %u \n", part_size, vel_offset, accel_offset,color_offset, lifespan_offset, alive_time_offset);
-    
     shader_program = glCreateProgram();
     on_gl_error("ERROR: Could not create the shader program");
     
@@ -124,10 +116,15 @@ void emitter::init()
     glBindVertexArray(vao);
     
     glGenBuffers(1, &vbo_part);
-   // glGenBuffers(1, &vbo_index);
+    //glGenBuffers(1, &vbo_color);
     on_gl_error("ERROR: Could not generate the buffer objects");
     
     glBindBuffer(GL_ARRAY_BUFFER, vbo_part);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(pos_color) * max_particles, NULL, GL_DYNAMIC_DRAW);
+    
+    //glBindBuffer(GL_ARRAY_BUFFER, vbo_color);
+    //glBufferData(GL_ARRAY_BUFFER, part_size * max_particles, &(parts[0]), GL_DYNAMIC_DRAW);
+    
     //glBufferData(GL_ARRAY_BUFFER, part_size * max_particles, &(parts[0]), GL_STATIC_DRAW);
     // glBufferData with a null data just initializes that much memory (particle is 
     //glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(pos_color), (GLvoid*)0, GL_DYNAMIC_DRAW);
@@ -138,14 +135,15 @@ void emitter::init()
     on_gl_error("ERROR: Could not enable vertex attributes");
     
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(pos_color), (GLvoid*)0);             // Position
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(pos_color), (GLvoid*)(sizeof(float) * 4));  // Color
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(pos_color), (GLvoid*)(sizeof(float) * 3));  // Color
     on_gl_error("ERROR: Could not set VAO attributes");
     
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_index);
     //glBufferData(GL_ELEMENT_ARRAY_BUFFER, poly_size * poly_count, &(polys[0]), GL_STATIC_DRAW);
     on_gl_error("ERROR: Could not bind the IBO to the VAO");
     
-
+    //glDisableVertexAttribArray(0);
+    //glDisableVertexAttribArray(1);
     
     // Generate texture objects
     glGenTextures( 1, &tex_id );
@@ -153,11 +151,6 @@ void emitter::init()
     // Make texture object active
     glBindTexture( GL_TEXTURE_2D, tex_id );
     on_gl_error("ERROR: Could not bind Texture");
-    
-    // ENABLE POINT SPRITES
-    //glEnable(GL_POINT_SPRITE);
-    //glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-    //glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
     
     // Set texture parameters
     //glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
@@ -185,6 +178,7 @@ void emitter::init()
     //glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     //glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_FALSE);
     
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glUseProgram(0);
 }
@@ -227,6 +221,18 @@ void emitter::active_on()
     active = true;
 }
 
+void emitter::next_spawn_controller()
+{
+    ++spawn_controller;
+    if(spawn_controller >= spawner::num_spawn_controllers) spawn_controller = 0;
+}
+void emitter::prev_spawn_controller()
+{
+    if(spawn_controller == 0) spawn_controller = spawner::num_spawn_controllers - 1;
+    else --spawn_controller;
+    
+}
+
 
 //////////////////////
 // UPDATE FUNCTIONS //
@@ -236,9 +242,7 @@ void emitter::update(const double& delta_time)
 {
     // DON'T RUN UPDATE IF INACTIVE AND THERE ARE NO PARTICLES (DO RUN IF INACTIVE AND THERE ARE PARTICLES)
     if(!active && !(particle_count > 0)) return;
-    
-    fprintf(stdout, "PARTICLES : %u : delta_time : %f\n", particle_count, delta_time);
-    
+
     // PROCESS OVER ALL PARTICLES
     vector<particle>::iterator it = parts.begin();
     while(it != parts.end())
@@ -256,7 +260,7 @@ void emitter::update(const double& delta_time)
             // RUN FUNCTIONS, APPLY VELOCITY AND ACCELERATION
             for(size_t i = 0; i < active_controllers.size(); ++i)
             {
-                active_controllers[i](it, delta_time / 1000.0f);
+                active_controllers[i](it, delta_time);
             }
             
             it->apply_acceleration(delta_time);
@@ -265,17 +269,20 @@ void emitter::update(const double& delta_time)
         }
     }
     
+    if(particle_count % 5 == 0) fprintf(stdout, "%u - %u = %u\n", max_particles, particle_count, max_particles - particle_count);
     // IF ACTIVE, SPAWN MORE PARTICLES
     if(active) spawn_quota(delta_time);
     
     // UPDATE THE FRAME MATRIX (LEGACY)
     frame_matrix = model_matrix;
     
+    glBindVertexArray(vao);
     pos_color* temp_data = get_data();
     glBindBuffer(GL_ARRAY_BUFFER, vbo_part);
-    //glBufferSubData(GL_ARRAY_BUFFER, 0, parts.size() * sizeof(pos_color), temp_data);
-    glBufferData(GL_ARRAY_BUFFER, parts.size() * sizeof(pos_color), temp_data, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, parts.size() * sizeof(pos_color), temp_data);
+    //glBufferData(GL_ARRAY_BUFFER, parts.size() * sizeof(pos_color), temp_data, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
     
     delete temp_data;
 }
@@ -283,7 +290,7 @@ void emitter::update(const double& delta_time)
 void emitter::spawn_particle()
 {
     // CREATE A PARTICLE, ADD IT TO THE VECTOR, INCREMENT PARTICLE_COUNT
-    particle p = spawn_controller(particle_lifespan);
+    particle p = spawner::spawn_controllers[spawn_controller](particle_lifespan);
     p.set_color(base_color[0], base_color[1], base_color[2], base_color[3]); 
     parts.push_back(p);
     ++particle_count;
@@ -300,7 +307,7 @@ void emitter::spawn_quota(const double& delta_time)
     uint32_t quota = (generation_speed * delta_time) / 1000;
     
     // SPAWN AS MANY PARTICLES AS WE CAN UP TO QUOTA
-    for(uint32_t i = 0; !(particle_count > max_particles) && i < quota; ++i)
+    for(uint32_t i = 0; (particle_count < max_particles) && i < quota; ++i)
     {
         spawn_particle();
     }
@@ -480,6 +487,54 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
             active_controllers.push_back(controller::log_spiral_yz);
             current_controller_name = "LOG_SPIRAL_YZ";
             break;
+        // SINE
+        case SINE_WAVE_Y_TO_X:
+            active_controllers.push_back(controller::sine_wave_y_to_x);
+            current_controller_name = "SINE_WAVE_Y_TO_X";
+            break;
+        // TAN
+        case TAN_GRAPH_Y_TO_X:
+            active_controllers.push_back(controller::tan_graph_y_to_x);
+            current_controller_name = "TAN_GRAPH_Y_TO_X";
+            break;
+        // COSH
+        case COSH_GRAPH_Y_TO_X:
+            active_controllers.push_back(controller::cosh_graph_y_to_x);
+            current_controller_name = "COSH_GRAPH_Y_TO_X";
+            break;
+        
+        // COLOR TRANSITIONS
+        case RED_TO_YELLOW:
+            active_controllers.push_back(controller::red_to_yellow);
+            current_controller_name = "RED_TO_YELLOW";
+            break;
+        case YELLOW_TO_BLUE:
+            active_controllers.push_back(controller::yellow_to_blue);
+            current_controller_name = "YELLOW_TO_BLUE";
+            break;
+        case BLUE_TO_RED:
+            active_controllers.push_back(controller::blue_to_red);
+            current_controller_name = "BLUE_TO_RED";
+            break;
+            
+        // COLORED TRIG
+        case COLORED_SINE:
+            active_controllers.push_back(controller::sine_wave_y_to_x);
+            active_controllers.push_back(controller::red_to_yellow);
+            current_controller_name = "COLORED_SINE";
+            break;
+        // TAN
+        case COLORED_TAN:
+            active_controllers.push_back(controller::tan_graph_y_to_x);
+            active_controllers.push_back(controller::yellow_to_blue);
+            current_controller_name = "COLORED_TAN";
+            break;
+        // COSH
+        case COLORED_COSH:
+            active_controllers.push_back(controller::cosh_graph_y_to_x);
+            active_controllers.push_back(controller::blue_to_red);
+            current_controller_name = "COLORED_COSH";
+            break;
         default:
             break;
     }
@@ -505,26 +560,33 @@ void emitter::draw(const glm::mat4& view_matrix, const glm::mat4& projection_mat
     // SET THE VAO TO ACTIVE
     glBindVertexArray(vao);
     
-    // RE-SET VERTEX ATTRIB ARRAYS
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    on_gl_error("ERROR: Could not enable vertex attributes");
     
-    // RE-SET TEXTURE STUFF
-    glBindTexture( GL_TEXTURE_2D, tex_id );
-    //glEnable(GL_BLEND);
+    //glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    // ENABLE POINT SPRITES
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    //glEnable(GL_POINT_SPRITE);
-    //glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+    glEnable(GL_POINT_SPRITE);
+    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+    glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
     
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     glDrawArrays(GL_POINTS, 0, parts.size());
     
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+   
+    on_gl_error("ERROR: Could not enable vertex attributes");
     
-    //glDisable(GL_TEXTURE_2D);
-    //glDisable(GL_POINT_SPRITE);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_POINT_SPRITE);
+    glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     
     glBindVertexArray(0);
     

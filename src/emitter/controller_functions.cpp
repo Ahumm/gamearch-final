@@ -6,74 +6,74 @@
 namespace controller {
     // SIN
     void sin_pos_x(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_position[0] = sin(part_it->p_alive_time); }
+        { part_it->p_position[0] = sin(part_it->seconds_alive()); }
     void sin_pos_y(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_position[1] = sin(part_it->p_alive_time); }
+        { part_it->p_position[1] = sin(part_it->seconds_alive()); }
     void sin_pos_z(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_position[2] = sin(part_it->p_alive_time); }
+        { part_it->p_position[2] = sin(part_it->seconds_alive()); }
         
     void sin_vel_x(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_velocity[0] = sin(part_it->p_alive_time); }
+        { part_it->p_velocity[0] = sin(part_it->seconds_alive()); }
     void sin_vel_y(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_velocity[1] = sin(part_it->p_alive_time); }
+        { part_it->p_velocity[1] = sin(part_it->seconds_alive()); }
     void sin_vel_z(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_velocity[2] = sin(part_it->p_alive_time); }
+        { part_it->p_velocity[2] = sin(part_it->seconds_alive()); }
         
     void sin_acc_x(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_acceleration[0] = sin(part_it->p_alive_time); }
+        { part_it->p_acceleration[0] = sin(part_it->seconds_alive()); }
     void sin_acc_y(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_acceleration[1] = sin(part_it->p_alive_time); }
+        { part_it->p_acceleration[1] = sin(part_it->seconds_alive()); }
     void sin_acc_z(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_acceleration[2] = sin(part_it->p_alive_time); }
+        { part_it->p_acceleration[2] = sin(part_it->seconds_alive()); }
     
     // COS
     void cos_pos_x(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_position[0] = cos(part_it->p_alive_time); }
+        { part_it->p_position[0] = cos(part_it->seconds_alive()); }
     void cos_pos_y(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_position[1] = cos(part_it->p_alive_time); }
+        { part_it->p_position[1] = cos(part_it->seconds_alive()); }
     void cos_pos_z(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_position[2] = cos(part_it->p_alive_time); }
+        { part_it->p_position[2] = cos(part_it->seconds_alive()); }
         
     void cos_vel_x(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_velocity[0] = cos(part_it->p_alive_time); }
+        { part_it->p_velocity[0] = cos(part_it->seconds_alive()); }
     void cos_vel_y(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_velocity[1] = cos(part_it->p_alive_time); }
+        { part_it->p_velocity[1] = cos(part_it->seconds_alive()); }
     void cos_vel_z(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_velocity[2] = cos(part_it->p_alive_time); }
+        { part_it->p_velocity[2] = cos(part_it->seconds_alive()); }
 
     void cos_acc_x(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_acceleration[0] = cos(part_it->p_alive_time); }
+        { part_it->p_acceleration[0] = cos(part_it->seconds_alive()); }
     void cos_acc_y(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_acceleration[1] = cos(part_it->p_alive_time); }
+        { part_it->p_acceleration[1] = cos(part_it->seconds_alive()); }
     void cos_acc_z(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_acceleration[2] = cos(part_it->p_alive_time); }
+        { part_it->p_acceleration[2] = cos(part_it->seconds_alive()); }
         
     // EXP
     void exp_pos_x(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_position[0] = exp(part_it->p_alive_time); }
+        { part_it->p_position[0] = exp(part_it->seconds_alive()); }
     void exp_pos_y(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_position[1] = exp(part_it->p_alive_time); }
+        { part_it->p_position[1] = exp(part_it->seconds_alive()); }
     void exp_pos_z(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_position[2] = exp(part_it->p_alive_time); }
+        { part_it->p_position[2] = exp(part_it->seconds_alive()); }
     
     void exp_vel_x(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_velocity[0] = exp(part_it->p_alive_time); }
+        { part_it->p_velocity[0] = exp(part_it->seconds_alive()); }
     void exp_vel_y(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_velocity[1] = exp(part_it->p_alive_time); }
+        { part_it->p_velocity[1] = exp(part_it->seconds_alive()); }
     void exp_vel_z(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_velocity[2] = exp(part_it->p_alive_time); }
+        { part_it->p_velocity[2] = exp(part_it->seconds_alive()); }
     
     void exp_acc_x(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_acceleration[0] = exp(part_it->p_alive_time); }
+        { part_it->p_acceleration[0] = exp(part_it->seconds_alive()); }
     void exp_acc_y(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_acceleration[1] = exp(part_it->p_alive_time); }
+        { part_it->p_acceleration[1] = exp(part_it->seconds_alive()); }
     void exp_acc_z(vector<particle>::iterator part_it, const double& delta_time)
-        { part_it->p_acceleration[2] = exp(part_it->p_alive_time); }
+        { part_it->p_acceleration[2] = exp(part_it->seconds_alive()); }
         
     // BUTTERFLY CURVE
     void butterfly_curve_xy(vector<particle>::iterator part_it, const double& delta_time)
     {
-        float t = (float)part_it->p_alive_time;
+        float t = (float)part_it->seconds_alive();
         float co = cos(t);
         float si = cos(t);
         float si_12 = sin(t / 12.0f);
@@ -84,7 +84,7 @@ namespace controller {
     }
     void butterfly_curve_xz(vector<particle>::iterator part_it, const double& delta_time)
     {
-        float t = (float)part_it->p_alive_time;
+        float t = (float)part_it->seconds_alive();
         float co = cos(t);
         float si = cos(t);
         float si_12 = sin(t / 12.0f);
@@ -95,7 +95,7 @@ namespace controller {
     }
     void butterfly_curve_yz(vector<particle>::iterator part_it, const double& delta_time)
     {
-        float t = (float)part_it->p_alive_time;
+        float t = (float)part_it->seconds_alive();
         float co = cos(t);
         float si = cos(t);
         float si_12 = sin(t / 12.0f);
@@ -136,6 +136,51 @@ namespace controller {
 		
 		part_it->p_velocity[1] = 1.0f;
 	}
+    // TAN_GRAPH
+	void tan_graph_y_to_x(vector<particle>::iterator part_it, const double& delta_time)
+	{
+		part_it->p_position[0] = tan(part_it->p_position[1]);
+		part_it->p_velocity[0] = part_it->p_velocity[2];
+		part_it->p_acceleration[0] = part_it->p_acceleration[1] = part_it->p_acceleration[2] = 0.0f;
+		
+		part_it->p_velocity[1] = 1.0f;
+	}
+    // COSH_GRAPH
+	void cosh_graph_y_to_x(vector<particle>::iterator part_it, const double& delta_time)
+	{
+		part_it->p_position[0] = cosh(part_it->p_position[1]);
+		part_it->p_velocity[0] = part_it->p_velocity[2];
+		part_it->p_acceleration[0] = part_it->p_acceleration[1] = part_it->p_acceleration[2] = 0.0f;
+		
+		part_it->p_velocity[1] = 1.0f;
+	}
+    
+    // COLOR_TRANSITIONS
+    void red_to_yellow(vector<particle>::iterator part_it, const double& delta_time)
+    {
+        float k = (float)(part_it->p_alive_time) / (float)(part_it->p_lifespan);
+        part_it->p_color[0] = 1.0f;
+        part_it->p_color[1] = lerp(0.0f, 1.0f, k);
+        part_it->p_color[2] = 0.0f;
+        part_it->p_color[3] = 1.0f;
+    }
+    void yellow_to_blue(vector<particle>::iterator part_it, const double& delta_time)
+    {
+        float k = (float)(part_it->p_alive_time) / (float)(part_it->p_lifespan);
+        part_it->p_color[0] = lerp(1.0f, 0.0f, k);
+        part_it->p_color[1] = lerp(1.0f, 0.0f, k);
+        part_it->p_color[2] = lerp(0.0f, 1.0f, k);
+        part_it->p_color[3] = 1.0f;
+    }
+    void blue_to_red(vector<particle>::iterator part_it, const double& delta_time)
+    {
+        float k = (float)(part_it->p_alive_time) / (float)(part_it->p_lifespan);
+        fprintf(stdout, "%f / %f = %f\n", (float)(part_it->p_alive_time), (float)(part_it->p_lifespan), k);
+        part_it->p_color[0] = lerp(0.0f, 1.0f, k);
+        part_it->p_color[1] = 0.0f;
+        part_it->p_color[2] = lerp(1.0f, 0.0f, k);
+        part_it->p_color[3] = 1.0f;
+    }
 }
 
 

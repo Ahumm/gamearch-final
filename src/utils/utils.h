@@ -6,7 +6,7 @@
 #include <string>
 
 #define PI 3.14159265358979323846
-#define MAX_PARTICLES_PER_EMITTER 20000
+#define MAX_PARTICLES_PER_EMITTER 10000
 
 #define lerp(f1, f2, a) ((f1 * a) + f2 * (1.0 - a) )
 

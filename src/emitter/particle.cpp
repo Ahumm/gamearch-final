@@ -62,6 +62,11 @@ void particle::set_color(const float& r, const float& g, const float& b, const f
     p_color[3] = (a < 0.0f) ? 0.0f : ((a > 1.0f) ? 1.0f : a);
 }
 
+double particle::seconds_alive()
+{
+    return (p_alive_time / 1000.0);
+}
+
 
 ///////////////
 // FUNCTIONS //
@@ -72,7 +77,6 @@ void particle::apply_acceleration(const double& delta_time)
     p_velocity[0] += p_acceleration[0] * delta_time / 1000.0f;
     p_velocity[1] += p_acceleration[1] * delta_time / 1000.0f;
     p_velocity[2] += p_acceleration[2] * delta_time / 1000.0f;
-    fprintf(stdout, "vel : %f : %f : %f\n", p_velocity[0], p_velocity[1], p_velocity[2]);
 }
 
 void particle::apply_velocity(const double& delta_time)
@@ -80,7 +84,6 @@ void particle::apply_velocity(const double& delta_time)
     p_position[0] += p_velocity[0] * delta_time / 1000.0f;
     p_position[1] += p_velocity[1] * delta_time / 1000.0f;
     p_position[2] += p_velocity[2] * delta_time / 1000.0f;
-    fprintf(stdout, "pos : %f : %f : %f\n", p_position[0], p_position[1], p_position[2]);
 }
 
 

@@ -62,6 +62,15 @@ namespace controller
 	
 	// SINE_WAVE
 	void sine_wave_y_to_x(vector<particle>::iterator part_it, const double& delta_time);
+    // TAN_GRAPH
+	void tan_graph_y_to_x(vector<particle>::iterator part_it, const double& delta_time);
+    // COSH_GRAPH
+	void cosh_graph_y_to_x(vector<particle>::iterator part_it, const double& delta_time);
+
+    // COLOR_TRANSITIONS
+    void red_to_yellow(vector<particle>::iterator part_it, const double& delta_time);
+    void yellow_to_blue(vector<particle>::iterator part_it, const double& delta_time);
+    void blue_to_red(vector<particle>::iterator part_it, const double& delta_time);
 }
 
 namespace spawner
@@ -76,6 +85,10 @@ namespace spawner
 	particle cone_vel(const double& lifespan);
     particle cone_acc(const double& lifespan);
     particle cone_full(const double& lifespan);
+    
+    typedef particle (*sptr)(const double&);
+    const uint32_t num_spawn_controllers = 7;
+    const sptr spawn_controllers[] = {random_pos, random_vel, random_acc, random_full, cone_vel, cone_acc, cone_full};
 }
 
 #endif
