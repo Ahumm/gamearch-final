@@ -49,7 +49,7 @@ glm::vec3 camera_positions[27] = { glm::vec3(-2.0f,-2.0f,-2.0f), glm::vec3(-2.0f
 uint32_t selected_camera = 0;
 uint32_t num_cams = 27;
 
-float camera_scale = 5.0f;
+float camera_scale = 5.0f, camera_scale_2 = 1.0f;
 
 //glm::vec3 campos = glm::vec3(0.0,-10.0,15.0);
 glm::vec3 campos = camera_positions[selected_camera] * camera_scale;//glm::vec3(0.0,-10.0,15.0);
@@ -75,8 +75,8 @@ void deactivate_unused();
 
 // Some values for switching between models/emitters
 bool on_models = true;
-size_t model_index = -1;
-size_t emitter_index = -1;
+int model_index = -1;
+int emitter_index = -1;
 
 uint32_t my_controller = 0;
 
@@ -87,14 +87,22 @@ int main(int argc, char* argv[])
     spawn_panda("models/panda-model.egg");
     
     spawn_emitter("textures/particle.png", 100, 50);    // 0
-    spawn_emitter("textures/particle.png", 10, 50);     // 1
-    spawn_emitter("textures/particle.png", 300, 20);    // 2
+    spawn_emitter("textures/particle.png", 200, 60);    // 1
+    spawn_emitter("textures/particle.png", 300, 40);    // 2
     spawn_emitter("textures/particle.png", 300, 60);    // 3
+    spawn_emitter("textures/particle.png", 200, 100);   // 4
+    spawn_emitter("textures/particle.png", 150, 60);    // 5
+    spawn_emitter("textures/particle.png", 3000, 60);   // 6
     
-    emitters[0].set_base_color(1.0f,0.0f,0.0f,1.0f);
-    emitters[1].set_base_color(0.0f,1.0f,0.0f,1.0f);
-    emitters[2].set_base_color(0.0f,0.0f,1.0f,1.0f);
-    emitters[3].set_base_color(1.0f,1.0f,1.0f,1.0f);
+    emitters[0].set_base_color(1.0f,0.0f,0.0f,1.0f); // RED      (EMITTER0)
+    emitters[1].set_base_color(0.0f,1.0f,0.0f,1.0f); // GREEN    (EMITTER1)
+    emitters[2].set_base_color(0.0f,0.0f,1.0f,1.0f); // BLUE     (EMITTER2)
+    emitters[3].set_base_color(1.0f,1.0f,0.0f,1.0f); // YELLOW   (EMITTER3)
+    emitters[4].set_base_color(1.0f,0.0f,1.0f,1.0f); // Magenta  (EMITTER4)
+    emitters[5].set_base_color(1.0f,1.0f,1.0f,1.0f); // WHITE    (EMITTER5)
+    emitters[6].set_base_color(0.0f,1.0f,1.0f,1.0f); // CYAN     (EMITTER6)
+    
+    fprintf(stdout, "%u : %f\n", emitters[2].particle_count, emitters[2].particle_lifespan);
     
     game_loop();
 	
@@ -289,7 +297,12 @@ bool handle_keys(const sf::Event& event)
     else if(event.key.code == sf::Keyboard::RControl)
     {
         camera_scale = (camera_scale == 5.0f) ? 10.0f : (camera_scale == 10.0f) ? 1.0f : (camera_scale == 1.0f) ? 3.0f : 5.0f;
-        campos = camera_positions[selected_camera] * camera_scale;
+        campos = camera_positions[selected_camera] * camera_scale * camera_scale_2;
+    }
+    else if(event.key.code == sf::Keyboard::BackSlash)
+    {
+        camera_scale_2 = (camera_scale_2 == 5.0f) ? 10.0f : (camera_scale_2 == 10.0f) ? 1.0f : (camera_scale_2 == 1.0f) ? 3.0f : 5.0f;
+        campos = camera_positions[selected_camera] * camera_scale * camera_scale_2;
     }
     else if(event.key.code == sf::Keyboard::Equal)
     {
@@ -311,6 +324,20 @@ bool handle_keys(const sf::Event& event)
             }
         }
     }
+    else if(event.key.code == sf::Keyboard::Num1)
+    {
+        if(!on_models && (!(emitter_index < 0 || emitter_index >= emitters.size())))
+        {
+            emitters[emitter_index].prev_spawn_controller();
+        }
+    }
+    else if(event.key.code == sf::Keyboard::Num2)
+    {
+        if(!on_models && (!(emitter_index < 0 || emitter_index >= emitters.size())))
+        {
+            emitters[emitter_index].next_spawn_controller();
+        }
+    }
     
     return false;
 }
@@ -325,13 +352,13 @@ void resize_function(const sf::Event& event)
 void update_function(const double& delta_time)
 {
     // CHECK THAT THE "SELECTED" MODEL IS VALID
-    if(model_index < 0 && models.size() > 0) model_index = 0;
+    if(model_index < 0 && models.size() > 0) model_index = models.size() - 1;
     else if(models.size() <= 0) model_index = -1;
-    else if(model_index >= models.size()) model_index = models.size() - 1;
+    else if(model_index >= models.size()) model_index = 0;
     // CHECK THAT THE "SELECTED" EMITTER IS VALID
-    if(emitter_index < 0 && emitters.size() > 0) emitter_index = 0;
+    if(emitter_index < 0 && emitters.size() > 0) emitter_index = emitters.size() - 1;
     else if(emitters.size() <= 0) emitter_index = -1;
-    else if(emitter_index >= emitters.size()) emitter_index = emitters.size() - 1;
+    else if(emitter_index >= emitters.size()) emitter_index = 0;
     
     // UPDATE WINDOW TITLE
     if(on_models)

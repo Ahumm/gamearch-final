@@ -74,8 +74,9 @@ namespace controller {
     void butterfly_curve_xy(vector<particle>::iterator part_it, const double& delta_time)
     {
         float t = (float)part_it->seconds_alive();
+        t = fmodf(abs(t), 2 * PI);
         float co = cos(t);
-        float si = cos(t);
+        float si = sin(t);
         float si_12 = sin(t / 12.0f);
         float final = (exp(co) - (2.0f * cos(4.0f * t)) - pow(si_12, 5.0f));
         
@@ -85,8 +86,9 @@ namespace controller {
     void butterfly_curve_xz(vector<particle>::iterator part_it, const double& delta_time)
     {
         float t = (float)part_it->seconds_alive();
+        t = fmodf(abs(t), 2 * PI);
         float co = cos(t);
-        float si = cos(t);
+        float si = sin(t);
         float si_12 = sin(t / 12.0f);
         float final = (exp(co) - (2.0f * cos(4.0f * t)) - pow(si_12, 5.0f));
         
@@ -96,33 +98,48 @@ namespace controller {
     void butterfly_curve_yz(vector<particle>::iterator part_it, const double& delta_time)
     {
         float t = (float)part_it->seconds_alive();
+        t = fmodf(abs(t), 2 * PI);
         float co = cos(t);
-        float si = cos(t);
+        float si = sin(t);
         float si_12 = sin(t / 12.0f);
         float final = (exp(co) - (2.0f * cos(4.0f * t)) - pow(si_12, 5.0f));
         
         part_it->p_position[1] = si * final;
         part_it->p_position[2] = co * final;
     }
+    void butterfly_curve_flat(vector<particle>::iterator part_it, const double& delta_time)
+    {
+        float t = (float)part_it->seconds_alive();
+        t = fmodf(abs(t), 2 * PI);
+        float co = cos(t);
+        float si = sin(t);
+        float si_12 = sin(t / 12.0f);
+        float final = (exp(co) - (2.0f * cos(4.0f * t)) - pow(si_12, 5.0f));
+        
+        part_it->p_position[0] = si * final;
+        part_it->p_position[1] = co * final;
+        part_it->p_position[2] = 0.0f;
+    }
     
     // Log Spiral
     void log_spiral_xy(vector<particle>::iterator part_it, const double& delta_time)
     {
-        float a = 0.2, b = 0.5, t = (float)delta_time;
+        float a = 0.2, b = 0.5, t = (float)part_it->seconds_alive();
+        t = fmodf(abs(t), 2 * PI);
         part_it->p_position[0] = a * cos(t) * exp(b * t);
         part_it->p_position[1] = a * sin(t) * exp(b * t);
     }
     
     void log_spiral_xz(vector<particle>::iterator part_it, const double& delta_time)
     {
-        float a = 0.2, b = 0.5, t = (float)delta_time;
+        float a = 0.2, b = 0.5, t = (float)part_it->seconds_alive();
         part_it->p_position[0] = a * cos(t) * exp(b * t);
         part_it->p_position[2] = a * sin(t) * exp(b * t);
     }
     
     void log_spiral_yz(vector<particle>::iterator part_it, const double& delta_time)
     {
-        float a = 0.2, b = 0.5, t = (float)delta_time;
+        float a = 0.2, b = 0.5, t = (float)part_it->seconds_alive();
         part_it->p_position[1] = a * cos(t) * exp(b * t);
         part_it->p_position[2] = a * sin(t) * exp(b * t);
     }
@@ -180,6 +197,15 @@ namespace controller {
         part_it->p_color[1] = 0.0f;
         part_it->p_color[2] = lerp(1.0f, 0.0f, k);
         part_it->p_color[3] = 1.0f;
+    }
+    
+    //CIRCLE
+    void circle(vector<particle>::iterator part_it, const double& delta_time)
+    {
+        float t = (float)part_it->seconds_alive();
+        t = fmodf(abs(t), 2 * PI);
+        part_it->p_position[0] = sin(t);
+        part_it->p_position[1] = cos(t);
     }
 }
 
