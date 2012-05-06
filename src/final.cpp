@@ -30,6 +30,7 @@ vector<emitter> emitters;
 
 double thistime, oldtime, dt, starttime;
 
+// MASS OF CAMERA LOCATIONS (PROBABLY SHOULD JUST ADD CAMERA CONTROLS)
 glm::vec3 camera_positions[30] = { glm::vec3(2.0f,2.0f,2.0f), glm::vec3(5.0f,5.0f,5.0f),
                                    glm::vec3(10.0f,10.0f,10.0f), glm::vec3(2.0f,-2.0f,2.0f),
                                    glm::vec3(5.0f,-5.0f,5.0f),glm::vec3(10.0f,-10.0f,10.0f), 
@@ -45,18 +46,14 @@ glm::vec3 camera_positions[30] = { glm::vec3(2.0f,2.0f,2.0f), glm::vec3(5.0f,5.0
                                    glm::vec3(5.0f,0.0f,0.0f), glm::vec3(5.0f,5.0f,0.0f), 
                                    glm::vec3(0.0f,5.0f,0.0f), glm::vec3(0.0f,5.0f,5.0f), 
                                    glm::vec3(0.0f,0.0f,5.0f), glm::vec3(5.0f,0.0f,5.0f) };
-      /*                             
-glm::vec3(0.0,-10.0,15.0), glm::vec3(0.0,  0.0,15.0),
-                                glm::vec3(0.0,  0.0,25.0), glm::vec3(0.0,-10.0,25.0),
-                                glm::vec3(10.0,  0.0,5.0), glm::vec3(-10.0,-10.0,-10.0),
-                                glm::vec3(-5.0,-5.0,-5.0), glm::vec3(2.0,2.0,2.0),
-                                glm::vec3(-10.0,  0.0,5.0), glm::vec3(10.0,10.0,10.0) };
-      */
+
 uint32_t selected_camera = 2;
 uint32_t num_cams = 30;
 
+float camera_scale = 1.0f;
+
 //glm::vec3 campos = glm::vec3(0.0,-10.0,15.0);
-glm::vec3 campos = camera_positions[selected_camera];//glm::vec3(0.0,-10.0,15.0);
+glm::vec3 campos = camera_positions[selected_camera] * camera_scale;//glm::vec3(0.0,-10.0,15.0);
 glm::vec3 tarpos = glm::vec3(0.0,0.0,0.0);
 glm::vec3 upworl = glm::vec3(0.0,1.0,0.0);
 
@@ -268,12 +265,12 @@ bool handle_keys(const sf::Event& event)
     else if(event.key.code == sf::Keyboard::Tab)
     {
         selected_camera = (selected_camera + 1) % num_cams;
-        campos = camera_positions[selected_camera];
+        campos = camera_positions[selected_camera] * camera_scale;
     }
     else if(event.key.code == sf::Keyboard::Tilde)
     {
         selected_camera = (selected_camera - 1 + num_cams) % num_cams;
-        campos = camera_positions[selected_camera];
+        campos = camera_positions[selected_camera] * camera_scale;
     }
     else if(event.key.code == sf::Keyboard::RShift)
     {
@@ -284,6 +281,11 @@ bool handle_keys(const sf::Event& event)
                 models[model_index].rotate = !models[model_index].rotate;
             }
         }
+    }
+    else if(event.key.code == sf::Keyboard::RControl)
+    {
+         camera_scale = (camera_scale == 1.0f) ? 2.0f : (camera_scale == 2.0f) ? 3.0f : 1.0f;
+         campos = camera_positions[selected_camera] * camera_scale;
     }
     
     return false;
