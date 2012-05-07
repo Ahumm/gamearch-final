@@ -35,6 +35,7 @@ emitter::emitter()
     current_controller_name = "NO_CONTROLLER";
     
     spawn_controller = 0;
+	fade = true;
 }
 
 // TAKES LIFESPAN IN SECONDS
@@ -55,6 +56,7 @@ emitter::emitter(const char* texture_file, const double& lifespan, const uint32_
     current_controller_name = "NO_CONTROLLER";
     
     spawn_controller = 0;
+	fade = true;
 }
 
 emitter::emitter(const emitter& other)
@@ -76,6 +78,7 @@ emitter::emitter(const emitter& other)
     current_controller_name = other.current_controller_name;
     active_controllers = other.active_controllers;
     spawn_controller = other.spawn_controller;
+	fade = other.fade;
 }
 
 emitter::~emitter() {}
@@ -447,6 +450,7 @@ emitter& emitter::operator=(const emitter& other)
         current_controller_name = other.current_controller_name;
         active_controllers = other.active_controllers;
         spawn_controller = other.spawn_controller;
+		fade = other.fade;
     }
     
     return *this;
@@ -824,7 +828,7 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
         default:
             break;
     }
-    if(auto_fade)
+    if(auto_fade && fade)
         active_controllers.push_back(controller::fade_in_and_out_edge);
     
 }

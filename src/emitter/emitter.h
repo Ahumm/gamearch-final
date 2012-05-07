@@ -112,7 +112,8 @@ public:
     bool active;
     float base_color[4];
     const static int mass = 1000;
-    
+    bool fade;
+	
     base_emitter_control_types controller;
     
     string current_controller_name;
