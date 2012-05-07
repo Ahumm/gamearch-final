@@ -89,15 +89,15 @@ int main(int argc, char* argv[])
     
     spawn_emitter("textures/particle.png", 10, 50);    // 0
     spawn_emitter("textures/particle.png", 20, 60);    // 1
-    spawn_emitter("textures/particle.png", 30, 40);    // 2
-    spawn_emitter("textures/particle.png", 30, 60);    // 3
-    spawn_emitter("textures/particle.png", 20, 100);   // 4
+    spawn_emitter("textures/particle.png", 30, 70);    // 2
+    spawn_emitter("textures/particle.png", 30, 80);    // 3
+    spawn_emitter("textures/particle.png", 30, 90);   // 4
     spawn_emitter("textures/particle.png", 15, 60);    // 5
     spawn_emitter("textures/particle.png", 30, 60);    // 6
     spawn_emitter("textures/particle.png", 30, 6000);  // 6
     spawn_emitter("textures/particle.png", 30000, 60); // 7
     
-    emitters[0].set_base_color(1.0f,0.0f,0.0f,1.0f); // RED      (EMITTER0)
+    emitters[0].set_base_color(1.0f,1.0f,1.0f,1.0f); // WHITE    (EMITTER0)
     emitters[1].set_base_color(0.0f,1.0f,0.0f,1.0f); // GREEN    (EMITTER1)
     emitters[2].set_base_color(0.0f,0.0f,1.0f,1.0f); // BLUE     (EMITTER2)
     emitters[3].set_base_color(1.0f,1.0f,0.0f,1.0f); // YELLOW   (EMITTER3)
@@ -173,7 +173,7 @@ void init_window()
     wclock = new sf::Clock();
     window->setActive();
     window->display();
-    window->setFramerateLimit(60);
+    window->setFramerateLimit(30);
 }
 
 void destroy_window()
@@ -226,7 +226,7 @@ bool handle_keys(const sf::Event& event)
 {
     if(event.key.code == sf::Keyboard::Escape)
     {
-        window->close();
+        window->close(); 
         return true;
     }
     else if(event.key.code == sf::Keyboard::A)
@@ -240,6 +240,14 @@ bool handle_keys(const sf::Event& event)
             --emitter_index;
         }
     }
+	else if(event.key.code == sf::Keyboard::P)
+	{
+		if(!on_models && !(emitter_index < 0))
+        {
+            emitters[emitter_index].fade = !emitters[emitter_index].fade;
+            emitters[emitter_index].switch_controller((base_emitter_control_types)my_controller);
+        }
+	}
     else if(event.key.code == sf::Keyboard::S)
     {
         if(on_models)
