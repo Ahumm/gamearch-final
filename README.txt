@@ -48,4 +48,6 @@ Requires:
 Pretty standard cmake then make.
 Might currently demand the static SFML libraries (Commenting out line 10 of CMakeLists.txt might fix that)
 
+If you do decide to build SFML 2.0's static libraries on windows, there is sometimes a bug where the build.make files for SFML's Audio, Graphics, Network, and Window incorrectly use a 'del "*.o" /f /q' when it should use 'rm -f "*.o"'. You can just change those in the build.make files in <SFML_DIR>/src/SFML/<Audio,Graphics,Network,Window>/CMakeFiles/sfml-<audio,graphics,network,window>.dir/build.make
+
 Standard policy of email if there are issues
