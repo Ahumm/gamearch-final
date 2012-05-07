@@ -40,8 +40,10 @@ enum base_emitter_control_types
     LOG_SPIRAL_XY , LOG_SPIRAL_XZ ,
     LOG_SPIRAL_YZ , LOG_SPIRAL_FLAT ,
     
-    SINE_WAVE_Y_TO_X , TAN_GRAPH_Y_TO_X , COSH_GRAPH_Y_TO_X ,
-    SINE_WAVE_FLAT , TAN_GRAPH_FLAT, COSH_GRAPH_FLAT,
+    SINE_WAVE_Y_TO_X , COS_WAVE_Y_TO_X , TAN_GRAPH_Y_TO_X ,
+    SINH_GRAPH_Y_TO_X , COSH_GRAPH_Y_TO_X , TANH_GRAPH_Y_TO_X ,
+    SINE_WAVE_FLAT , COS_WAVE_FLAT , TAN_GRAPH_FLAT, 
+    SINH_GRAPH_FLAT , COSH_GRAPH_FLAT , TANH_GRAPH_FLAT ,
     
     WHITE , BLACK , 
     RED , YELLOW , GREEN , CYAN , BLUE , MAGENTA ,
@@ -49,11 +51,13 @@ enum base_emitter_control_types
     RED_TO_CYAN , YELLOW_TO_BLUE , GREEN_TO_MAGENTA ,
     CYAN_TO_RED , BLUE_TO_YELLOW , MAGENTA_TO_GREEN ,
     
-    FADE , UN_FADE ,
+    FADE , UN_FADE , FADE_IN_AND_OUT , FADE_IN_AND_OUT_EDGE ,
     
     COLORED_SINE , COLORED_TAN , COLORED_COSH ,
     
     CIRCLE_XY ,
+    
+    STEP , GRAVITY_Y , GRAVITY_B , ROTATE ,
     
     ENUM_END
 };
@@ -80,6 +84,7 @@ public:
         frag_shader,
         vert_shader,
         u_thickness_loc,
+        cam_pos_loc,
         mvp_matrix_loc,
         projection_matrix_loc,
         view_matrix_loc,
@@ -106,6 +111,7 @@ public:
     float thickness;
     bool active;
     float base_color[4];
+    const static int mass = 1000;
     
     base_emitter_control_types controller;
     
@@ -169,7 +175,7 @@ public:
     // DRAW FUNCTIONS //
     ////////////////////
     
-    void draw(const glm::mat4& view_matrix, const glm::mat4& projection_matrix);
+    void draw(const glm::mat4& view_matrix, const glm::mat4& projection_matrix, const glm::vec3& cam_pos);
     
     
     ///////////////

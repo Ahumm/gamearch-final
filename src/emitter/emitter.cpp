@@ -31,6 +31,7 @@ emitter::emitter()
     init();
     
     controller = NO_CONTROLLER;
+    active_controllers.push_back(controller::fade_in_and_out_edge);
     current_controller_name = "NO_CONTROLLER";
     
     spawn_controller = 0;
@@ -50,6 +51,7 @@ emitter::emitter(const char* texture_file, const double& lifespan, const uint32_
     init();
     
     controller = NO_CONTROLLER;
+    active_controllers.push_back(controller::fade_in_and_out_edge);
     current_controller_name = "NO_CONTROLLER";
     
     spawn_controller = 0;
@@ -72,6 +74,7 @@ emitter::emitter(const emitter& other)
     
     controller = other.controller;
     current_controller_name = other.current_controller_name;
+    active_controllers = other.active_controllers;
     spawn_controller = other.spawn_controller;
 }
 
@@ -106,6 +109,7 @@ void emitter::init()
     glUseProgram(shader_program);
     
     mvp_matrix_loc = glGetUniformLocation(shader_program, "MVPMatrix");
+    cam_pos_loc = glGetUniformLocation(shader_program, "cam_pos");
     u_thickness_loc = glGetUniformLocation(shader_program, "uThickness");
     sampler_loc = glGetUniformLocation(shader_program, "s_tex");
     
@@ -245,6 +249,9 @@ void emitter::update(const double& delta_time)
         return;
     }
     
+    // IF ACTIVE, SPAWN MORE PARTICLES
+    spawn_quota(delta_time);
+    
     // PROCESS OVER ALL PARTICLES
     vector<particle>::iterator it = parts.begin();
     while(it != parts.end())
@@ -271,10 +278,6 @@ void emitter::update(const double& delta_time)
         }
     }
     
-    if(particle_count % 5 == 0) fprintf(stdout, "%u - %u = %u\n", max_particles, particle_count, max_particles - particle_count);
-    // IF ACTIVE, SPAWN MORE PARTICLES
-    if(active) spawn_quota(delta_time);
-    
     // UPDATE THE FRAME MATRIX (LEGACY)
     frame_matrix = model_matrix;
     // Update the center
@@ -295,11 +298,8 @@ void emitter::spawn_particle()
 {
     // CREATE A PARTICLE, ADD IT TO THE VECTOR, INCREMENT PARTICLE_COUNT
     particle p = spawner::spawn_controllers[spawn_controller](particle_lifespan, this);
-    p.set_color(base_color[0], base_color[1], base_color[2], base_color[3]);
     parts.push_back(p);
     ++particle_count;
-    
-    //fprintf(stdout, "%f %f %f\n", x, y, z);
 }
 
 void emitter::spawn_quota(const double& delta_time)
@@ -308,7 +308,7 @@ void emitter::spawn_quota(const double& delta_time)
     if(!(particle_count < max_particles)) return;
 
     // CALCULATE NUMBER OF UNITS TO SPAWN
-    uint32_t quota = (generation_speed * delta_time) / 1000;
+    uint32_t quota = ((generation_speed * delta_time) / 1000) + 1;
     
     // SPAWN AS MANY PARTICLES AS WE CAN UP TO QUOTA
     for(uint32_t i = 0; (particle_count < max_particles) && i < quota; ++i)
@@ -335,12 +335,14 @@ void emitter::switch_controller(const base_emitter_control_types& new_controller
     if(controller == new_controller) return;
     clear_controller();
     add_controller(new_controller);
+    controller = new_controller;
 }
 
 void emitter::clear_controller()
 {
     // CLEAR VECTOR OF FUNCTION POINTERS
     controller = NO_CONTROLLER;
+    current_controller_name = "NO_CONTROLLER";
     active_controllers.clear();
     // RESET (DESTROY ALL PARTICLES)
     clear_all_particles();
@@ -351,7 +353,7 @@ void emitter::clear_controller()
 // DRAW FUNCTIONS //
 ////////////////////
 
-void emitter::draw(const glm::mat4& view_matrix, const glm::mat4& projection_matrix)
+void emitter::draw(const glm::mat4& view_matrix, const glm::mat4& projection_matrix, const glm::vec3& cam_pos)
 {
     // DON'T DRAW IF INACTIVE OR NO PARTICLES TO DRAW
     if(!active || !(particle_count > 0)) return;
@@ -362,6 +364,7 @@ void emitter::draw(const glm::mat4& view_matrix, const glm::mat4& projection_mat
     glm::mat4 mvp_matrix = projection_matrix * view_matrix * frame_matrix;
     
     glUniformMatrix4fv(mvp_matrix_loc, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
+    glUniform3fv(cam_pos_loc, 1, glm::value_ptr(cam_pos));
     //glUniformMatrix4fv(model_matrix_loc, 1, GL_FALSE, glm::value_ptr(frame_matrix));
     //glUniformMatrix4fv(view_matrix_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
     //glUniformMatrix4fv(projection_matrix_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
@@ -442,7 +445,7 @@ emitter& emitter::operator=(const emitter& other)
         
         controller = other.controller;
         current_controller_name = other.current_controller_name;
-        
+        active_controllers = other.active_controllers;
         spawn_controller = other.spawn_controller;
     }
     
@@ -468,6 +471,7 @@ pos_color* emitter::get_data()
 
 void emitter::add_controller(const base_emitter_control_types& new_controller)
 {
+    bool auto_fade = true;
     switch(new_controller)
     {
         // SIN //
@@ -627,15 +631,30 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
             active_controllers.push_back(controller::sine_wave_y_to_x);
             current_controller_name = "SINE_WAVE_Y_TO_X";
             break;
+        // COS
+        case COS_WAVE_Y_TO_X:
+            active_controllers.push_back(controller::cos_wave_y_to_x);
+            current_controller_name = "COS_WAVE_Y_TO_X";
+            break;
         // TAN
         case TAN_GRAPH_Y_TO_X:
             active_controllers.push_back(controller::tan_graph_y_to_x);
             current_controller_name = "TAN_GRAPH_Y_TO_X";
             break;
+        // SINH
+        case SINH_GRAPH_Y_TO_X:
+            active_controllers.push_back(controller::sinh_graph_y_to_x);
+            current_controller_name = "SINH_GRAPH_Y_TO_X";
+            break;
         // COSH
         case COSH_GRAPH_Y_TO_X:
             active_controllers.push_back(controller::cosh_graph_y_to_x);
             current_controller_name = "COSH_GRAPH_Y_TO_X";
+            break;
+        // TANH
+        case TANH_GRAPH_Y_TO_X:
+            active_controllers.push_back(controller::tanh_graph_y_to_x);
+            current_controller_name = "TANH_GRAPH_Y_TO_X";
             break;
         // SINE_FLAT
         case SINE_WAVE_FLAT:
@@ -643,17 +662,35 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
             active_controllers.push_back(controller::zero_all_z);
             current_controller_name = "SINE_WAVE_FLAT";
             break;
+        // COS_FLAT
+        case COS_WAVE_FLAT:
+            active_controllers.push_back(controller::cos_wave_y_to_x);
+            active_controllers.push_back(controller::zero_all_z);
+            current_controller_name = "COS_WAVE_FLAT";
+            break;
         // TAN_FLAT
         case TAN_GRAPH_FLAT:
             active_controllers.push_back(controller::tan_graph_y_to_x);
             active_controllers.push_back(controller::zero_all_z);
             current_controller_name = "TAN_GRAPH_FLAT";
             break;
+        // SINH_FLAT
+        case SINH_GRAPH_FLAT:
+            active_controllers.push_back(controller::sinh_graph_y_to_x);
+            active_controllers.push_back(controller::zero_all_z);
+            current_controller_name = "SINH_GRAPH_FLAT";
+            break;
         // COSH_FLAT
         case COSH_GRAPH_FLAT:
             active_controllers.push_back(controller::cosh_graph_y_to_x);
             active_controllers.push_back(controller::zero_all_z);
             current_controller_name = "COSH_GRAPH_FLAT";
+            break;
+        // TANH_FLAT
+        case TANH_GRAPH_FLAT:
+            active_controllers.push_back(controller::tanh_graph_y_to_x);
+            active_controllers.push_back(controller::zero_all_z);
+            current_controller_name = "TANH_GRAPH_FLAT";
             break;
             
         // BASE_COLORS
@@ -728,10 +765,22 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
         case FADE:
             active_controllers.push_back(controller::fade);
             current_controller_name = "FADE";
+            auto_fade = false;
             break;
         case UN_FADE:
             active_controllers.push_back(controller::un_fade);
             current_controller_name = "UN_FADE";
+            auto_fade = false;
+            break;
+        case FADE_IN_AND_OUT:
+            active_controllers.push_back(controller::fade_in_and_out);
+            current_controller_name = "FADE_IN_AND_OUT";
+            auto_fade = false;
+            break;
+        case FADE_IN_AND_OUT_EDGE:
+            active_controllers.push_back(controller::fade_in_and_out_edge);
+            current_controller_name = "FADE_IN_AND_OUT_EDGE";
+            auto_fade = false;
             break;
             
         // COLORED TRIG
@@ -756,9 +805,28 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
             active_controllers.push_back(controller::circle_xy);
             current_controller_name = "CIRCLE_XY";
             break;
+        case STEP:
+            active_controllers.push_back(controller::step);
+            current_controller_name = "STEP";
+            break;
+        case GRAVITY_Y:
+            active_controllers.push_back(controller::gravity_y);
+            current_controller_name = "GRAVITY_Y";
+            break;
+        case GRAVITY_B:
+            active_controllers.push_back(controller::gravity_b);
+            current_controller_name = "GRAVITY_B";
+            break;
+        case ROTATE:
+            active_controllers.push_back(controller::rotate);
+            current_controller_name = "ROTATE";
+            break;
         default:
             break;
     }
+    if(auto_fade)
+        active_controllers.push_back(controller::fade_in_and_out_edge);
+    
 }
 
 

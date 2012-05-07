@@ -81,11 +81,17 @@ namespace controller
 	
 	// SINE_WAVE
 	void sine_wave_y_to_x(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
+    // COS_WAVE
+    void cos_wave_y_to_x(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
     // TAN_GRAPH
 	void tan_graph_y_to_x(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
+    // SINH_GRAPH
+	void sinh_graph_y_to_x(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
     // COSH_GRAPH
 	void cosh_graph_y_to_x(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
-
+    // TANH_GRAPH
+	void tanh_graph_y_to_x(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
+    
     // COLORS
     void white(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
     void black(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
@@ -109,9 +115,16 @@ namespace controller
     // ALPHA_CHANGES
     void fade(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
     void un_fade(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
+    void fade_in_and_out(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
+    void fade_in_and_out_edge(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
     
     // CIRCLE
     void circle_xy(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
+
+    void step(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
+    void gravity_y(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
+    void gravity_b(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
+    void rotate(vector<particle>::iterator part_it, const emitter* source_e, const double& delta_time);
 }
 
 namespace spawner
@@ -121,21 +134,26 @@ namespace spawner
     particle x_line(const double& lifespan, const emitter* source_e);
     particle y_line(const double& lifespan, const emitter* source_e);
     particle z_line(const double& lifespan, const emitter* source_e);
-
+    
 	// RANDOM
     particle random_pos(const double& lifespan, const emitter* source_e);
     particle random_vel(const double& lifespan, const emitter* source_e);
     particle random_acc(const double& lifespan, const emitter* source_e);
     particle random_full(const double& lifespan, const emitter* source_e);
 	
+    particle rand_sphere(const double& lifespan, const emitter* source_e);
+    
 	// CONE
 	particle cone_vel(const double& lifespan, const emitter* source_e);
     particle cone_acc(const double& lifespan, const emitter* source_e);
     particle cone_full(const double& lifespan, const emitter* source_e);
     
+    void random_color(particle& p);
+    
     typedef particle (*sptr)(const double&, const emitter*);
-    const uint32_t num_spawn_controllers = 7;
-    const sptr spawn_controllers[] = {random_pos, random_vel, random_acc, random_full, cone_vel, cone_acc, cone_full};
+    const uint32_t num_spawn_controllers = 12;
+    const sptr spawn_controllers[] = {random_pos, rand_sphere, center, x_line, y_line, z_line, random_vel, random_acc, random_full, cone_vel, cone_acc, cone_full};
+
 }
 
 #endif

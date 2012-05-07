@@ -6,9 +6,7 @@
 #include <GL/glew.h> //MUST come before GLFW!
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
-#include <SFML/System/String.hpp>
 #include <SFML/Graphics/Image.hpp>
-#include <SFML/Graphics/Font.hpp>
 #include <glm/glm.hpp> //feel free to use your own math library!
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -22,7 +20,6 @@ int current_width = 1200,
     
 sf::Window* window = NULL;
 sf::Clock* wclock = NULL;
-sf::Font font;
 
 string window_title = "Fun Fun Fun";
 string window_title_base = "Fun Fun Fun";
@@ -33,23 +30,22 @@ vector<emitter> emitters;
 double thistime, oldtime, dt, starttime;
 
 // MASS OF CAMERA LOCATIONS (PROBABLY SHOULD JUST ADD CAMERA CONTROLS)
-glm::vec3 camera_positions[27] = { glm::vec3(-2.0f,-2.0f,-2.0f), glm::vec3(-2.0f,-2.0f, 0.0f),
+glm::vec3 camera_positions[25] = { glm::vec3(-2.0f,-2.0f,-2.0f), glm::vec3(-2.0f,-2.0f, 0.0f),
                                    glm::vec3(-2.0f,-2.0f, 2.0f), glm::vec3(-2.0f, 0.0f,-2.0f),
                                    glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(-2.0f, 0.0f, 2.0f),
                                    glm::vec3(-2.0f, 2.0f,-2.0f), glm::vec3(-2.0f, 2.0f, 0.0f),
                                    glm::vec3(-2.0f, 2.0f, 2.0f), glm::vec3( 0.0f,-2.0f,-2.0f),
-                                   glm::vec3( 0.0f,-2.0f, 0.0f), glm::vec3( 0.0f,-2.0f, 2.0f),
-                                   glm::vec3( 0.0f, 0.0f,-2.0f), glm::vec3( 0.0f, 0.0f, 0.0f),
+                                   glm::vec3( 0.0f,-2.0f, 2.0f), glm::vec3( 0.0f, 0.0f,-2.0f), 
                                    glm::vec3( 0.0f, 0.0f, 2.0f), glm::vec3( 0.0f, 2.0f,-2.0f),
-                                   glm::vec3( 0.0f, 2.0f, 0.0f), glm::vec3( 0.0f, 2.0f, 2.0f),
                                    glm::vec3( 2.0f,-2.0f,-2.0f), glm::vec3( 2.0f,-2.0f, 0.0f),
                                    glm::vec3( 2.0f,-2.0f, 2.0f), glm::vec3( 2.0f, 0.0f,-2.0f),
                                    glm::vec3( 2.0f, 0.0f, 0.0f), glm::vec3( 2.0f, 0.0f, 2.0f),
                                    glm::vec3( 2.0f, 2.0f,-2.0f), glm::vec3( 2.0f, 2.0f, 0.0f),
-                                   glm::vec3( 2.0f, 2.0f, 2.0f)  };
+                                   glm::vec3( 2.0f, 2.0f, 2.0f), glm::vec3( 0.0f, 2.0f, 2.0f)  };
 
 uint32_t selected_camera = 0;
-uint32_t num_cams = 27;
+uint32_t num_cams = 25;
+uint32_t home_cam = 12;
 
 float camera_scale = 5.0f, camera_scale_2 = 1.0f;
 
@@ -69,7 +65,7 @@ bool flanking = false;
 int model_index = -1;
 int emitter_index = -1;
 
-int my_controller = 0;
+uint32_t my_controller = 0;
 
 
 void initialize(int& argc,char* argv[]);
@@ -97,7 +93,9 @@ int main(int argc, char* argv[])
     spawn_emitter("textures/particle.png", 30, 60);    // 3
     spawn_emitter("textures/particle.png", 20, 100);   // 4
     spawn_emitter("textures/particle.png", 15, 60);    // 5
-    spawn_emitter("textures/particle.png", 30, 60);   // 6
+    spawn_emitter("textures/particle.png", 30, 60);    // 6
+    spawn_emitter("textures/particle.png", 30, 6000);  // 6
+    spawn_emitter("textures/particle.png", 30000, 60); // 7
     
     emitters[0].set_base_color(1.0f,0.0f,0.0f,1.0f); // RED      (EMITTER0)
     emitters[1].set_base_color(0.0f,1.0f,0.0f,1.0f); // GREEN    (EMITTER1)
@@ -106,6 +104,8 @@ int main(int argc, char* argv[])
     emitters[4].set_base_color(1.0f,0.0f,1.0f,1.0f); // Magenta  (EMITTER4)
     emitters[5].set_base_color(1.0f,1.0f,1.0f,1.0f); // WHITE    (EMITTER5)
     emitters[6].set_base_color(0.0f,1.0f,1.0f,1.0f); // CYAN     (EMITTER6)
+    emitters[7].set_base_color(1.0f,1.0f,1.0f,1.0f); // WHITE    (EMITTER7)
+    emitters[7].set_base_color(1.0f,1.0f,1.0f,1.0f); // WHITE    (EMITTER8)
     emitter_index = 0;
     
     game_loop();
@@ -173,11 +173,7 @@ void init_window()
     wclock = new sf::Clock();
     window->setActive();
     window->display();
-    window->setFramerateLimit(30);
-    if(!font.loadFromFile("arial.ttf"))
-    {
-        fprintf(stdout, "Could not load font.\n");
-    }
+    window->setFramerateLimit(60);
 }
 
 void destroy_window()
@@ -272,9 +268,10 @@ bool handle_keys(const sf::Event& event)
     }
     else if(event.key.code == sf::Keyboard::Left)
     {
-        if(!on_models && !(emitter_index < 0) && (base_emitter_control_types)my_controller != NO_CONTROLLER)
+        if(!on_models && !(emitter_index < 0) && my_controller != 0)
         {
             --my_controller;
+            fprintf(stdout, "%i\n",  my_controller);
             emitters[emitter_index].switch_controller((base_emitter_control_types)my_controller);
         }
     }
@@ -289,6 +286,10 @@ bool handle_keys(const sf::Event& event)
     else if(event.key.code == sf::Keyboard::Tab)
     {
         selected_camera = (selected_camera + 1) % num_cams;
+        campos = camera_positions[selected_camera] * camera_scale * camera_scale_2;
+    }
+    else if(event.key.code == sf::Keyboard::Home) {
+        selected_camera = home_cam;
         campos = camera_positions[selected_camera] * camera_scale * camera_scale_2;
     }
     else if(event.key.code == sf::Keyboard::Tilde)
@@ -413,16 +414,7 @@ void update_function(const double& delta_time)
 void render_function()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    // GUI_TEXT
-    /*
-    sf::String text;
-    text.setFont(font);
-    text.setSize(50);
-    text.setColor(sf::Color(0,0,128);
-    text.move(50.0f,50.0f);
-    text.setString("( " + float_to_string(campos.x) + " , " + float_to_string(campos.y) + " , " + float_to_string(campos.z) + " )");
-    */
+
     // Draw any active models
     for(size_t i = 0; on_models && i < models.size(); ++i)
     {
@@ -431,7 +423,7 @@ void render_function()
     // Draw any active emitters
     for(size_t i = 0; !on_models && i < emitters.size(); ++i)
     {
-        emitters[i].draw(view_matrix, projection_matrix);
+        emitters[i].draw(view_matrix, projection_matrix, campos);
     }
 }
 

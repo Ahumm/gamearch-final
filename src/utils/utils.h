@@ -6,7 +6,11 @@
 #include <string>
 
 #define PI 3.14159265358979323846
-#define MAX_PARTICLES_PER_EMITTER 10000
+#define MAX_PARTICLES_PER_EMITTER 100000
+#define GRAVITY -10000
+#define TERM_VEL 100
+#define GRAV_CONST 0.0000000000667384
+#define GRAV_MAX 100
 
 #define lerp(f1, f2, a) ((f1 * a) + f2 * (1.0 - a) )
 

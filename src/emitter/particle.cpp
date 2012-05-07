@@ -77,6 +77,10 @@ void particle::apply_acceleration(const double& delta_time)
     p_velocity[0] += p_acceleration[0] * delta_time / 1000.0f;
     p_velocity[1] += p_acceleration[1] * delta_time / 1000.0f;
     p_velocity[2] += p_acceleration[2] * delta_time / 1000.0f;
+    
+    p_velocity[0] = clamp(p_velocity[0], -TERM_VEL, TERM_VEL);
+    p_velocity[1] = clamp(p_velocity[1], -TERM_VEL, TERM_VEL);
+    p_velocity[2] = clamp(p_velocity[2], -TERM_VEL, TERM_VEL);
 }
 
 void particle::apply_velocity(const double& delta_time)
