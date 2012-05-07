@@ -6,7 +6,9 @@
 #include <GL/glew.h> //MUST come before GLFW!
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
+#include <SFML/System/String.hpp>
 #include <SFML/Graphics/Image.hpp>
+#include <SFML/Graphics/Font.hpp>
 #include <glm/glm.hpp> //feel free to use your own math library!
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -20,10 +22,10 @@ int current_width = 1200,
     
 sf::Window* window = NULL;
 sf::Clock* wclock = NULL;
+sf::Font font;
 
+string window_title = "Fun Fun Fun";
 string window_title_base = "Fun Fun Fun";
-string window_title = window_title_base + " - Model0";
-string window_title_old = window_title;
 
 vector<model> models;
 vector<emitter> emitters;
@@ -52,13 +54,23 @@ uint32_t num_cams = 27;
 float camera_scale = 5.0f, camera_scale_2 = 1.0f;
 
 //glm::vec3 campos = glm::vec3(0.0,-10.0,15.0);
-glm::vec3 campos = camera_positions[selected_camera] * camera_scale;//glm::vec3(0.0,-10.0,15.0);
+glm::vec3 campos = camera_positions[selected_camera] * camera_scale * camera_scale_2;//glm::vec3(0.0,-10.0,15.0);
 glm::vec3 tarpos = glm::vec3(0.0,0.0,0.0);
 glm::vec3 upworl = glm::vec3(0.0,1.0,0.0);
 
 //glm::mat4 projection_matrix = glm::perspective(60.0f, 16.0f / 9.0f, 0.1f, 100.f);
-glm::mat4 projection_matrix = glm::perspective(60.0f, (float)current_width / (float)current_height, 0.1f, 100.f);
+glm::mat4 projection_matrix = glm::perspective(60.0f, (float)current_width / (float)current_height, 0.1f, 1000.f);
 glm::mat4 view_matrix = glm::mat4(1.0f);
+
+
+// Some values for switching between models/emitters
+bool on_models = true;
+bool flanking = false;
+int model_index = -1;
+int emitter_index = -1;
+
+int my_controller = 0;
+
 
 void initialize(int& argc,char* argv[]);
 void init_window();
@@ -73,26 +85,19 @@ void spawn_emitter(const char* particle_texture_file, const double& lifespan, co
 void deactivate_unused();
 
 
-// Some values for switching between models/emitters
-bool on_models = true;
-int model_index = -1;
-int emitter_index = -1;
-
-uint32_t my_controller = 0;
-
 int main(int argc, char* argv[])
 {
 	initialize(argc, argv);
-
+    
     spawn_panda("models/panda-model.egg");
     
-    spawn_emitter("textures/particle.png", 100, 50);    // 0
-    spawn_emitter("textures/particle.png", 200, 60);    // 1
-    spawn_emitter("textures/particle.png", 300, 40);    // 2
-    spawn_emitter("textures/particle.png", 300, 60);    // 3
-    spawn_emitter("textures/particle.png", 200, 100);   // 4
-    spawn_emitter("textures/particle.png", 150, 60);    // 5
-    spawn_emitter("textures/particle.png", 3000, 60);   // 6
+    spawn_emitter("textures/particle.png", 10, 50);    // 0
+    spawn_emitter("textures/particle.png", 20, 60);    // 1
+    spawn_emitter("textures/particle.png", 30, 40);    // 2
+    spawn_emitter("textures/particle.png", 30, 60);    // 3
+    spawn_emitter("textures/particle.png", 20, 100);   // 4
+    spawn_emitter("textures/particle.png", 15, 60);    // 5
+    spawn_emitter("textures/particle.png", 30, 60);   // 6
     
     emitters[0].set_base_color(1.0f,0.0f,0.0f,1.0f); // RED      (EMITTER0)
     emitters[1].set_base_color(0.0f,1.0f,0.0f,1.0f); // GREEN    (EMITTER1)
@@ -101,8 +106,7 @@ int main(int argc, char* argv[])
     emitters[4].set_base_color(1.0f,0.0f,1.0f,1.0f); // Magenta  (EMITTER4)
     emitters[5].set_base_color(1.0f,1.0f,1.0f,1.0f); // WHITE    (EMITTER5)
     emitters[6].set_base_color(0.0f,1.0f,1.0f,1.0f); // CYAN     (EMITTER6)
-    
-    fprintf(stdout, "%u : %f\n", emitters[2].particle_count, emitters[2].particle_lifespan);
+    emitter_index = 0;
     
     game_loop();
 	
@@ -170,6 +174,10 @@ void init_window()
     window->setActive();
     window->display();
     window->setFramerateLimit(30);
+    if(!font.loadFromFile("arial.ttf"))
+    {
+        fprintf(stdout, "Could not load font.\n");
+    }
 }
 
 void destroy_window()
@@ -251,6 +259,10 @@ bool handle_keys(const sf::Event& event)
     {
         on_models = !on_models;
     }
+    else if(event.key.code == sf::Keyboard::F)
+    {
+        flanking = !flanking;
+    }
     else if(event.key.code == sf::Keyboard::R)
     {
         if(!on_models && !(emitter_index < 0))
@@ -277,12 +289,12 @@ bool handle_keys(const sf::Event& event)
     else if(event.key.code == sf::Keyboard::Tab)
     {
         selected_camera = (selected_camera + 1) % num_cams;
-        campos = camera_positions[selected_camera] * camera_scale;
+        campos = camera_positions[selected_camera] * camera_scale * camera_scale_2;
     }
     else if(event.key.code == sf::Keyboard::Tilde)
     {
         selected_camera = (selected_camera - 1 + num_cams) % num_cams;
-        campos = camera_positions[selected_camera] * camera_scale;
+        campos = camera_positions[selected_camera] * camera_scale * camera_scale_2;
     }
     else if(event.key.code == sf::Keyboard::RShift)
     {
@@ -366,27 +378,20 @@ void update_function(const double& delta_time)
         if(!(model_index < 0))
         {
             string co_ord = "( " + float_to_string(campos.x) + " , " + float_to_string(campos.y) + " , " + float_to_string(campos.z) + " )";
-            window_title = window_title_base + " - " + co_ord + " - Model" + int_to_string(model_index);
             if(!models[model_index].active) window_title = window_title + " - InActive";
         }
-        else window_title = window_title_base;
     }
     else
     {
         if(!(emitter_index < 0))
         {
             string co_ord = "( " + float_to_string(campos.x) + " , " + float_to_string(campos.y) + " , " + float_to_string(campos.z) + " )";
-            window_title = window_title_base + " - " + co_ord + " - Emitter" + int_to_string(emitter_index) + " - " + emitters[emitter_index].current_controller_name;
+            window_title = window_title_base + " - " + co_ord + " - " + int_to_string(emitter_index) + " - " + emitters[emitter_index].current_controller_name + " - " + int_to_string(emitters[emitter_index].spawn_controller);
             if(!emitters[emitter_index].active) window_title = window_title + " - InActive";
         }
-        else window_title = window_title_base;
     }
     
-    if(window_title != window_title_old)
-    {
-        window->setTitle(window_title);
-        window_title_old = window_title;
-    }
+    window->setTitle(window_title);
     
     deactivate_unused();
     
@@ -409,6 +414,15 @@ void render_function()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    // GUI_TEXT
+    /*
+    sf::String text;
+    text.setFont(font);
+    text.setSize(50);
+    text.setColor(sf::Color(0,0,128);
+    text.move(50.0f,50.0f);
+    text.setString("( " + float_to_string(campos.x) + " , " + float_to_string(campos.y) + " , " + float_to_string(campos.z) + " )");
+    */
     // Draw any active models
     for(size_t i = 0; on_models && i < models.size(); ++i)
     {
@@ -440,14 +454,28 @@ void spawn_emitter(const char* particle_texture_file, const double& lifespan, co
 
 void deactivate_unused()
 {
+    int left = -1, right = -1;
     for(size_t i = 0 ; i < emitters.size(); ++i)
     {
-        if(i != emitter_index)
-            emitters[i].active_off();
-        else
+        if(i == emitter_index)
+        {
             emitters[i].active_on();
+            if(flanking)
+            {
+                left = i - 1; right = i + 1;
+                if(left < 0) left = emitters.size() - 1;
+                if(right >= emitters.size()) right = 0;
+            }
+        }
+        else
+            emitters[i].active_off();
+    }
+    
+    if(flanking)
+    {
+        emitters[left].active_on();
+        emitters[right].active_on();
     }
 }
-
 
 

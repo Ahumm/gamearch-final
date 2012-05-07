@@ -17,11 +17,13 @@
 
 using namespace std;
 
+class emitter;
+
 // BASIC FUNCTION CONTROLLERS
 enum base_emitter_control_types
-{ 
+{
     NO_CONTROLLER ,
-    SIN_POS_X , SIN_POS_Y , SIN_POS_Z ,    
+    SIN_POS_X , SIN_POS_Y , SIN_POS_Z ,  
     SIN_VEL_X , SIN_VEL_Y , SIN_VEL_Z ,
     SIN_ACC_X , SIN_ACC_Y , SIN_ACC_Z ,
     
@@ -33,13 +35,25 @@ enum base_emitter_control_types
     EXP_VEL_X , EXP_VEL_Y , EXP_VEL_Z ,
     EXP_ACC_X , EXP_ACC_Y , EXP_ACC_Z ,
     
-    BUTTERFLY_CURVE_XY , BUTTERFLY_CURVE_XZ , BUTTERFLY_CURVE_YZ ,
-    LOG_SPIRAL_XY , LOG_SPIRAL_XZ , LOG_SPIRAL_YZ ,
+    BUTTERFLY_CURVE_XY , BUTTERFLY_CURVE_XZ , 
+    BUTTERFLY_CURVE_YZ , BUTTERFLY_CURVE_FLAT ,
+    LOG_SPIRAL_XY , LOG_SPIRAL_XZ ,
+    LOG_SPIRAL_YZ , LOG_SPIRAL_FLAT ,
     
     SINE_WAVE_Y_TO_X , TAN_GRAPH_Y_TO_X , COSH_GRAPH_Y_TO_X ,
-    RED_TO_YELLOW , YELLOW_TO_BLUE , BLUE_TO_RED ,
+    SINE_WAVE_FLAT , TAN_GRAPH_FLAT, COSH_GRAPH_FLAT,
+    
+    WHITE , BLACK , 
+    RED , YELLOW , GREEN , CYAN , BLUE , MAGENTA ,
+    WHITE_TO_BLACK , BLACK_TO_WHITE ,
+    RED_TO_CYAN , YELLOW_TO_BLUE , GREEN_TO_MAGENTA ,
+    CYAN_TO_RED , BLUE_TO_YELLOW , MAGENTA_TO_GREEN ,
+    
+    FADE , UN_FADE ,
     
     COLORED_SINE , COLORED_TAN , COLORED_COSH ,
+    
+    CIRCLE_XY ,
     
     ENUM_END
 };
@@ -49,7 +63,7 @@ typedef struct {
     float color[4];
 } pos_color;
 
-typedef void (*fptr)(vector<particle>::iterator, const double&);
+typedef void (*fptr)(vector<particle>::iterator, const emitter*, const double&);
 //typedef particle (*sptr)(const double&);
 
 class emitter {
@@ -59,12 +73,14 @@ public:
     ///////////////
     
     glm::mat4 model_matrix;
+    glm::vec4 center;
     glm::mat4 frame_matrix;
     GLuint
         shader_program,
         frag_shader,
         vert_shader,
         u_thickness_loc,
+        mvp_matrix_loc,
         projection_matrix_loc,
         view_matrix_loc,
         model_matrix_loc,

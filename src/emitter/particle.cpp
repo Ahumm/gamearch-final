@@ -81,9 +81,10 @@ void particle::apply_acceleration(const double& delta_time)
 
 void particle::apply_velocity(const double& delta_time)
 {
-    p_position[0] += p_velocity[0] * delta_time / 1000.0f;
-    p_position[1] += p_velocity[1] * delta_time / 1000.0f;
-    p_position[2] += p_velocity[2] * delta_time / 1000.0f;
+    double t = delta_time / 1000.0;
+    p_position[0] += p_velocity[0] * t + 0.5 * p_acceleration[0] * t * t;
+    p_position[1] += p_velocity[1] * t + 0.5 * p_acceleration[1] * t * t;
+    p_position[2] += p_velocity[2] * t + 0.5 * p_acceleration[2] * t * t;
 }
 
 

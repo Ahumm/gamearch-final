@@ -105,9 +105,7 @@ void emitter::init()
     
     glUseProgram(shader_program);
     
-    model_matrix_loc = glGetUniformLocation(shader_program, "ModelMatrix");
-    view_matrix_loc = glGetUniformLocation(shader_program, "ViewMatrix");
-    projection_matrix_loc = glGetUniformLocation(shader_program, "ProjectionMatrix");
+    mvp_matrix_loc = glGetUniformLocation(shader_program, "MVPMatrix");
     u_thickness_loc = glGetUniformLocation(shader_program, "uThickness");
     sampler_loc = glGetUniformLocation(shader_program, "s_tex");
     
@@ -241,8 +239,12 @@ void emitter::prev_spawn_controller()
 void emitter::update(const double& delta_time)
 {
     // DON'T RUN UPDATE IF INACTIVE AND THERE ARE NO PARTICLES (DO RUN IF INACTIVE AND THERE ARE PARTICLES)
-    if(!active && !(particle_count > 0)) return;
-
+    if(!active)
+    {
+        clear_all_particles();
+        return;
+    }
+    
     // PROCESS OVER ALL PARTICLES
     vector<particle>::iterator it = parts.begin();
     while(it != parts.end())
@@ -252,7 +254,7 @@ void emitter::update(const double& delta_time)
         // PARTICLE EXPIRED, REMOVE
         if(it->p_alive_time > particle_lifespan)
         {
-            fprintf(stdout, "Removing Node\n");
+            //fprintf(stdout, "Removing Node\n");
             remove_particle(it);
         }
         else
@@ -260,7 +262,7 @@ void emitter::update(const double& delta_time)
             // RUN FUNCTIONS, APPLY VELOCITY AND ACCELERATION
             for(size_t i = 0; i < active_controllers.size(); ++i)
             {
-                active_controllers[i](it, delta_time);
+                active_controllers[i](it, this, delta_time);
             }
             
             it->apply_acceleration(delta_time);
@@ -275,6 +277,8 @@ void emitter::update(const double& delta_time)
     
     // UPDATE THE FRAME MATRIX (LEGACY)
     frame_matrix = model_matrix;
+    // Update the center
+    center = frame_matrix * glm::vec4(0.0f,0.0f,0.0f,1.0f);
     
     glBindVertexArray(vao);
     pos_color* temp_data = get_data();
@@ -284,14 +288,14 @@ void emitter::update(const double& delta_time)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     
-    delete temp_data;
+    delete [] temp_data;
 }
 
 void emitter::spawn_particle()
 {
     // CREATE A PARTICLE, ADD IT TO THE VECTOR, INCREMENT PARTICLE_COUNT
-    particle p = spawner::spawn_controllers[spawn_controller](particle_lifespan);
-    p.set_color(base_color[0], base_color[1], base_color[2], base_color[3]); 
+    particle p = spawner::spawn_controllers[spawn_controller](particle_lifespan, this);
+    p.set_color(base_color[0], base_color[1], base_color[2], base_color[3]);
     parts.push_back(p);
     ++particle_count;
     
@@ -341,6 +345,126 @@ void emitter::clear_controller()
     // RESET (DESTROY ALL PARTICLES)
     clear_all_particles();
 }
+
+
+////////////////////
+// DRAW FUNCTIONS //
+////////////////////
+
+void emitter::draw(const glm::mat4& view_matrix, const glm::mat4& projection_matrix)
+{
+    // DON'T DRAW IF INACTIVE OR NO PARTICLES TO DRAW
+    if(!active || !(particle_count > 0)) return;
+    glUseProgram(shader_program);
+    
+    glEnable(GL_TEXTURE_2D);
+    
+    glm::mat4 mvp_matrix = projection_matrix * view_matrix * frame_matrix;
+    
+    glUniformMatrix4fv(mvp_matrix_loc, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
+    //glUniformMatrix4fv(model_matrix_loc, 1, GL_FALSE, glm::value_ptr(frame_matrix));
+    //glUniformMatrix4fv(view_matrix_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
+    //glUniformMatrix4fv(projection_matrix_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+    glUniform1f(u_thickness_loc, thickness);
+    glUniform1i(sampler_loc, 0);
+    
+    // SET THE VAO TO ACTIVE
+    glBindVertexArray(vao);
+    
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    
+    // ENABLE BLENDING OPTIONS
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glEnable(GL_POINT_SPRITE);
+    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+    glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glDrawArrays(GL_POINTS, 0, parts.size());
+    
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+   
+    on_gl_error("ERROR: Could not enable vertex attributes");
+    
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_POINT_SPRITE);
+    glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+    
+    glBindVertexArray(0);
+    
+    glDisable(GL_TEXTURE_2D);
+    
+    glUseProgram(0);
+}
+
+
+///////////////
+// OPERATORS //
+///////////////
+
+
+// SIMPLE ASSIGNMENT OPERATOR
+emitter& emitter::operator=(const emitter& other)
+{
+    if(this != &other)
+    {
+        model_matrix = other.model_matrix;
+        frame_matrix = model_matrix;
+        texture = other.texture;
+        particle_lifespan = other.particle_lifespan;
+        generation_speed = other.generation_speed;
+        
+        max_particles = other.max_particles;
+        
+        particle_count = other.particle_count;
+        spawn_radius = other.spawn_radius;
+        thickness = other.thickness;
+        
+        base_color[0] = other.base_color[0];
+        base_color[1] = other.base_color[1];
+        base_color[2] = other.base_color[2];
+        base_color[3] = other.base_color[3];
+    
+        active = other.active;
+
+        parts = other.parts;
+        
+        init();
+        
+        controller = other.controller;
+        current_controller_name = other.current_controller_name;
+        
+        spawn_controller = other.spawn_controller;
+    }
+    
+    return *this;
+}
+
+pos_color* emitter::get_data()
+{
+    pos_color* temp_data = new pos_color[parts.size()];
+    vector<particle>::iterator it = parts.begin();
+    size_t i = 0;
+    while(it != parts.end())
+    {
+        memcpy(temp_data[i].position, it->p_position, sizeof(float) * 3);
+        memcpy(temp_data[i].color, it->p_color, sizeof(float) * 4);
+        ++i;
+        ++it;
+    }
+    
+    return temp_data;
+}
+
 
 void emitter::add_controller(const base_emitter_control_types& new_controller)
 {
@@ -473,6 +597,11 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
             active_controllers.push_back(controller::butterfly_curve_yz);
             current_controller_name = "BUTTERFLY_CURVE_YZ";
             break;
+        case BUTTERFLY_CURVE_FLAT:
+            active_controllers.push_back(controller::butterfly_curve_xy);
+            active_controllers.push_back(controller::zero_all_z);
+            current_controller_name = "BUTTERFLY_CURVE_FLAT";
+            break;
         
         // LOG_SPIRAL
         case LOG_SPIRAL_XY:
@@ -487,6 +616,12 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
             active_controllers.push_back(controller::log_spiral_yz);
             current_controller_name = "LOG_SPIRAL_YZ";
             break;
+        case LOG_SPIRAL_FLAT:
+            active_controllers.push_back(controller::log_spiral_xy);
+            active_controllers.push_back(controller::zero_all_z);
+            current_controller_name = "LOG_SPIRAL_FLAT";
+            break;
+            
         // SINE
         case SINE_WAVE_Y_TO_X:
             active_controllers.push_back(controller::sine_wave_y_to_x);
@@ -502,25 +637,107 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
             active_controllers.push_back(controller::cosh_graph_y_to_x);
             current_controller_name = "COSH_GRAPH_Y_TO_X";
             break;
-        
-        // COLOR TRANSITIONS
-        case RED_TO_YELLOW:
-            active_controllers.push_back(controller::red_to_yellow);
-            current_controller_name = "RED_TO_YELLOW";
+        // SINE_FLAT
+        case SINE_WAVE_FLAT:
+            active_controllers.push_back(controller::sine_wave_y_to_x);
+            active_controllers.push_back(controller::zero_all_z);
+            current_controller_name = "SINE_WAVE_FLAT";
+            break;
+        // TAN_FLAT
+        case TAN_GRAPH_FLAT:
+            active_controllers.push_back(controller::tan_graph_y_to_x);
+            active_controllers.push_back(controller::zero_all_z);
+            current_controller_name = "TAN_GRAPH_FLAT";
+            break;
+        // COSH_FLAT
+        case COSH_GRAPH_FLAT:
+            active_controllers.push_back(controller::cosh_graph_y_to_x);
+            active_controllers.push_back(controller::zero_all_z);
+            current_controller_name = "COSH_GRAPH_FLAT";
+            break;
+            
+        // BASE_COLORS
+        case WHITE:
+            active_controllers.push_back(controller::white);
+            current_controller_name = "WHITE";
+            break;
+        case BLACK:
+            active_controllers.push_back(controller::black);
+            current_controller_name = "BLACK";
+            break;
+        case RED:
+            active_controllers.push_back(controller::red);
+            current_controller_name = "RED";
+            break;
+        case YELLOW:
+            active_controllers.push_back(controller::yellow);
+            current_controller_name = "YELLOW";
+            break;
+        case GREEN:
+            active_controllers.push_back(controller::green);
+            current_controller_name = "GREEN";
+            break;
+        case CYAN:
+            active_controllers.push_back(controller::cyan);
+            current_controller_name = "CYAN";
+            break;
+        case BLUE:
+            active_controllers.push_back(controller::blue);
+            current_controller_name = "BLUE";
+            break;
+        case MAGENTA:
+            active_controllers.push_back(controller::magenta);
+            current_controller_name = "MAGENTA";
+            break;
+            
+        // COLOR_TRANSITIONS
+        case WHITE_TO_BLACK:
+            active_controllers.push_back(controller::white_to_black);
+            current_controller_name = "WHITE_TO_BLACK";
+            break;
+        case BLACK_TO_WHITE:
+            active_controllers.push_back(controller::black_to_white);
+            current_controller_name = "BLACK_TO_WHITE";
+            break;
+        case RED_TO_CYAN:
+            active_controllers.push_back(controller::red_to_cyan);
+            current_controller_name = "RED_TO_CYAN";
             break;
         case YELLOW_TO_BLUE:
             active_controllers.push_back(controller::yellow_to_blue);
             current_controller_name = "YELLOW_TO_BLUE";
             break;
-        case BLUE_TO_RED:
-            active_controllers.push_back(controller::blue_to_red);
-            current_controller_name = "BLUE_TO_RED";
+        case GREEN_TO_MAGENTA:
+            active_controllers.push_back(controller::green_to_magenta);
+            current_controller_name = "GREEN_TO_MAGENTA";
+            break;
+        case CYAN_TO_RED:
+            active_controllers.push_back(controller::cyan_to_red);
+            current_controller_name = "CYAN_TO_RED";
+            break;
+        case BLUE_TO_YELLOW:
+            active_controllers.push_back(controller::blue_to_yellow);
+            current_controller_name = "BLUE_TO_YELLOW";
+            break;
+        case MAGENTA_TO_GREEN:
+            active_controllers.push_back(controller::magenta_to_green);
+            current_controller_name = "MAGENTA_TO_GREEN";
+            break;
+        
+        // ALPHA_CHANGES
+        case FADE:
+            active_controllers.push_back(controller::fade);
+            current_controller_name = "FADE";
+            break;
+        case UN_FADE:
+            active_controllers.push_back(controller::un_fade);
+            current_controller_name = "UN_FADE";
             break;
             
         // COLORED TRIG
         case COLORED_SINE:
             active_controllers.push_back(controller::sine_wave_y_to_x);
-            active_controllers.push_back(controller::red_to_yellow);
+            active_controllers.push_back(controller::red_to_cyan);
             current_controller_name = "COLORED_SINE";
             break;
         // TAN
@@ -532,124 +749,16 @@ void emitter::add_controller(const base_emitter_control_types& new_controller)
         // COSH
         case COLORED_COSH:
             active_controllers.push_back(controller::cosh_graph_y_to_x);
-            active_controllers.push_back(controller::blue_to_red);
+            active_controllers.push_back(controller::green_to_magenta);
             current_controller_name = "COLORED_COSH";
+            break;
+        case CIRCLE_XY:
+            active_controllers.push_back(controller::circle_xy);
+            current_controller_name = "CIRCLE_XY";
             break;
         default:
             break;
     }
-}
-
-
-////////////////////
-// DRAW FUNCTIONS //
-////////////////////
-
-void emitter::draw(const glm::mat4& view_matrix, const glm::mat4& projection_matrix)
-{
-    // DON'T DRAW IF INACTIVE OR NO PARTICLES TO DRAW
-    if(!active || !(particle_count > 0)) return;
-    glUseProgram(shader_program);
-    
-    glUniformMatrix4fv(model_matrix_loc, 1, GL_FALSE, glm::value_ptr(frame_matrix));
-    glUniformMatrix4fv(view_matrix_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
-    glUniformMatrix4fv(projection_matrix_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
-    glUniform1f(u_thickness_loc, thickness);
-    glUniform1i(sampler_loc, 0);
-    
-    // SET THE VAO TO ACTIVE
-    glBindVertexArray(vao);
-    
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    
-    //glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, tex_id);
-    // ENABLE POINT SPRITES
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    glEnable(GL_POINT_SPRITE);
-    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-    glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glDrawArrays(GL_POINTS, 0, parts.size());
-    
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-   
-    on_gl_error("ERROR: Could not enable vertex attributes");
-    
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_POINT_SPRITE);
-    glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-    
-    glBindVertexArray(0);
-    
-    glUseProgram(0);
-}
-
-
-///////////////
-// OPERATORS //
-///////////////
-
-
-// SIMPLE ASSIGNMENT OPERATOR
-emitter& emitter::operator=(const emitter& other)
-{
-    if(this != &other)
-    {
-        model_matrix = other.model_matrix;
-        frame_matrix = model_matrix;
-        texture = other.texture;
-        particle_lifespan = other.particle_lifespan;
-        generation_speed = other.generation_speed;
-        
-        max_particles = other.max_particles;
-        
-        particle_count = other.particle_count;
-        spawn_radius = other.spawn_radius;
-        thickness = other.thickness;
-        
-        base_color[0] = other.base_color[0];
-        base_color[1] = other.base_color[1];
-        base_color[2] = other.base_color[2];
-        base_color[3] = other.base_color[3];
-    
-        active = other.active;
-
-        parts = other.parts;
-        
-        init();
-        
-        controller = other.controller;
-        current_controller_name = other.current_controller_name;
-        
-        spawn_controller = other.spawn_controller;
-    }
-    
-    return *this;
-}
-
-pos_color* emitter::get_data()
-{
-    pos_color* temp_data = new pos_color[parts.size()];
-    vector<particle>::iterator it = parts.begin();
-    size_t i = 0;
-    while(it != parts.end())
-    {
-        memcpy(temp_data[i].position, it->p_position, sizeof(float) * 3);
-        memcpy(temp_data[i].color, it->p_color, sizeof(float) * 4);
-        ++i;
-        ++it;
-    }
-    
-    return temp_data;
 }
 
 

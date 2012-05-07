@@ -208,6 +208,7 @@ void model::draw(const glm::mat4& view_matrix, const glm::mat4& projection_matri
     if(!active) return;
     glUseProgram(shader_program);
     
+    glEnable(GL_TEXTURE_2D);
     glUniformMatrix4fv(model_matrix_loc, 1, GL_FALSE, glm::value_ptr(frame_matrix));
     glUniformMatrix4fv(view_matrix_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
     glUniformMatrix4fv(projection_matrix_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
@@ -230,7 +231,7 @@ void model::draw(const glm::mat4& view_matrix, const glm::mat4& projection_matri
     glDrawElements(GL_TRIANGLES, poly_count, GL_UNSIGNED_INT, (GLvoid*)0);
     
     glBindVertexArray(0);
-    
+    glDisable(GL_TEXTURE_2D);
     glUseProgram(0);
 }
 
