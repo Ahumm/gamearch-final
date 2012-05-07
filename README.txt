@@ -2,6 +2,16 @@ Tate Larsen
 gamearch-final
 ==============
 
+
+Comments :
+=========
+Don't mind the stupid number of lines in src/emitter/emitter.cpp and src/emitter/controller_functions.cpp, that's just due to the horrible way I'm switching the control functions currently.
+
+Noticed a lack of grades on LMS for Uberlight and Subspace Skeletal Deformation (I think I included Uberlight in the same submission as SSD, it would be in the readme) didn't know if that was due to lateness, workingness, goodness, or if you missed it/them.
+
+===================================================================================================================================
+
+
 KeyBoard Shortcuts :
 ====================
                 ESC - Exit
@@ -39,12 +49,3 @@ Pretty standard cmake then make.
 Might currently demand the static SFML libraries (Commenting out line 10 of CMakeLists.txt might fix that)
 
 Standard policy of email if there are issues
-
-===================================================================================================================================
-
-
-Comments :
-=========
-Don't mind the stupid number of lines in src/emitter/emitter.cpp and src/emitter/controller_functions.cpp, that's just due to the horrible way I'm switching the control functions currently.
-
-Noticed a lack of grades on LMS for Uberlight and Subspace Skeletal Deformation (I think I included Uberlight in the same submission as SSD, it would be in the readme)
