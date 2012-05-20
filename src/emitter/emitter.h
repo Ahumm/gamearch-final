@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <iostream>
 #include <GL/glew.h> //MUST come before GLFW!
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
@@ -113,6 +114,8 @@ public:
     float base_color[4];
     const static int mass = 1000;
     bool fade;
+    
+    bool output_spam;
 	
     base_emitter_control_types controller;
     
@@ -130,7 +133,7 @@ public:
     //////////////////
     
     emitter();
-    emitter(const char* texture_file, const double& lifespan, const uint32_t& spawn_speed);
+    emitter(const char* texture_file, const double& lifespan, const uint32_t& count_or_speed, const bool& is_count);
     emitter(const emitter& other);
     ~emitter();
     
@@ -154,6 +157,7 @@ public:
     void next_spawn_controller();
     void prev_spawn_controller();
     
+    void print_status(std::ostream& out, const int& id = -1);
     
     //////////////////////
     // UPDATE FUNCTIONS //

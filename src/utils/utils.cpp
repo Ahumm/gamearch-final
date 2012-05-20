@@ -10,9 +10,10 @@ GLuint load_shader(const char* filename, const GLenum& shader_type)
 	FILE* file;
 	long file_size = -1;
 	GLchar* glsl_source;
+#if DEBUG_OUTPUT
     fprintf(stderr, "name: %s\n",filename);
     fprintf(stdout, "name: %s\n",filename);
-
+#endif
 	if (NULL != (file = fopen(filename, "rb")) &&
 		0 == fseek(file, 0, SEEK_END) &&
 		-1 != (file_size = ftell(file)))
@@ -36,28 +37,36 @@ GLuint load_shader(const char* filename, const GLenum& shader_type)
 				}
 				else
                 {
+                #if DEBUG_OUTPUT
 					fprintf(stderr, "ERROR: Could not create a shader.\n");
                     fprintf(stdout, "ERROR: Could not create a shader.\n");
+                #endif
                 }
 			}
 			else
             {
+            #if DEBUG_OUTPUT
 				fprintf(stderr, "ERROR: Could not read file %s\n", filename);
 				fprintf(stdout, "ERROR: Could not read file %s\n", filename);
+            #endif
             }
 			free(glsl_source);
 		}
 		else
         {
+        #if DEBUG_OUTPUT
 			fprintf(stderr, "ERROR: Could not allocate %li bytes.\n", file_size);
 			fprintf(stdout, "ERROR: Could not allocate %li bytes.\n", file_size);
+        #endif
         }
 		fclose(file);
 	}
 	else
     {
+    #if DEBUG_OUTPUT
 		fprintf(stderr, "ERROR: Could not open file %s\n", filename);
 		fprintf(stdout, "ERROR: Could not open file %s\n", filename);
+    #endif
     }
 
 	return shader_id;
@@ -74,14 +83,18 @@ void check_shader(const GLuint& shader)
 		char logbuffer[1000];
 		//there's also a corresponding glGetProgramInfoLog function for the linked program object
 		glGetShaderInfoLog(shader, sizeof(logbuffer), &loglen, logbuffer);
+    #if DEBUG_OUTPUT
 		fprintf(stderr, "OpenGL Shader Compile Error:\n%.*s", loglen, logbuffer);
 		fprintf(stdout, "OpenGL Shader Compile Error:\n%.*s", loglen, logbuffer);
+    #endif
 	} else {
 		int loglen;
 		char logbuffer[1000];
 		glGetShaderInfoLog(shader, sizeof(logbuffer), &loglen, logbuffer);
+    #if DEBUG_OUTPUT
 		fprintf(stderr, "OpenGL Shader Compile OK:\n%.*s", loglen, logbuffer);
 		fprintf(stdout, "OpenGL Shader Compile OK:\n%.*s", loglen, logbuffer);
+    #endif
 	}
 }
 
@@ -99,9 +112,10 @@ void on_gl_error(const char* error_message)
 
 		memcpy(display_message, error_message, message_length);
 		memcpy(&display_message[message_length], APPEND_DETAIL_STRING, APPEND_LENGTH);
-
+    #if DEBUG_OUTPUT
 		fprintf(stderr, display_message, "");//gluErrorString(ErrorValue));
 		fprintf(stdout, display_message, "");//gluErrorString(ErrorValue));
+    #endif
 
 		free(display_message);
 	}

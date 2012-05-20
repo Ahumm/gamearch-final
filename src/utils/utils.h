@@ -5,6 +5,8 @@
 #include <sstream>
 #include <string>
 
+#define DEBUG_OUTPUT 0
+
 #define PI 3.14159265358979323846
 #define MAX_PARTICLES_PER_EMITTER 100000
 #define GRAVITY -10000

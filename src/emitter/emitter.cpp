@@ -25,7 +25,8 @@ emitter::emitter()
     model_matrix = glm::mat4(1.0f);
     frame_matrix = model_matrix;
     
-    max_particles = ((uint32_t)particle_lifespan) * generation_speed + 1;
+    // Calculate our max particle count based on particle_lifespan (seconds) and generation_speed (particles / second)
+    max_particles = ((uint32_t)(particle_lifespan / 1000.0)) * generation_speed + 1;
     max_particles = (max_particles > MAX_PARTICLES_PER_EMITTER) ? MAX_PARTICLES_PER_EMITTER : max_particles;
 
     init();
@@ -39,15 +40,30 @@ emitter::emitter()
 }
 
 // TAKES LIFESPAN IN SECONDS
-emitter::emitter(const char* texture_file, const double& lifespan, const uint32_t& spawn_speed)
- : base_color({0.0f, 0.0f, 0.0f, 1.0f}), texture(texture_file), particle_lifespan(1000.0 * lifespan),
-    generation_speed(spawn_speed), particle_count(0), spawn_radius(1.0f), thickness(10.0f), active(true)
+//emitter::emitter(const char* texture_file, const double& lifespan, const uint32_t& spawn_speed)
+emitter::emitter(const char* texture_file, const double& lifespan, const uint32_t& count_or_speed, const bool& is_count)
+ : base_color({0.0f, 0.0f, 0.0f, 1.0f}), texture(texture_file), particle_lifespan(1000.0 * lifespan), particle_count(0), spawn_radius(1.0f), thickness(10.0f), active(true)
 {
     model_matrix = glm::mat4(1.0f);
     frame_matrix = model_matrix;
     
-    max_particles = ((uint32_t)particle_lifespan) * generation_speed + 1;
+    // Bullshit my way into being able to set a simple number of particles
+    if(is_count)
+    {
+        generation_speed = ((count_or_speed + 1) / lifespan);
+    }
+    else
+    {
+        generation_speed = count_or_speed;
+    }
+    
+    // Calculate our max particle count based on particle_lifespan (seconds) and generation_speed (particles / second)
+    fprintf(stdout, "\np_l         : %u\n", (uint32_t)particle_lifespan);
+    fprintf(stdout, "g_s         : %u\n", generation_speed);
+    max_particles = ((uint32_t)(particle_lifespan / 1000.0)) * generation_speed + 1;
+    fprintf(stdout, "m_p         : %u\n", max_particles);
     max_particles = (max_particles > MAX_PARTICLES_PER_EMITTER) ? MAX_PARTICLES_PER_EMITTER : max_particles;
+    fprintf(stdout, "m_p (bound) : %u\n\n", max_particles);
     
     init();
     
@@ -236,6 +252,35 @@ void emitter::prev_spawn_controller()
     if(spawn_controller == 0) spawn_controller = spawner::num_spawn_controllers - 1;
     else --spawn_controller;
     
+}
+
+
+// Prints the emitter's status with line prefix l_prefix
+void emitter::print_status(std::ostream& out, const int& id)
+{
+    string bool_resolution;
+    if(id >= 0)
+    {
+        out << "Emitter: " << id << "\n";
+    }
+    else
+    {
+        out << "Emitter:\n";
+    }
+    out << "\t" << "current_controller: " << current_controller_name << "\n";
+    out << "\t" << "part_size (B)         : " << part_size << "\n";
+    out << "\t" << "particle_count        : " << particle_count << "\n";
+    out << "\t" << "generation_speed      : " << generation_speed << "\n";
+    out << "\t" << "max_particles         : " << max_particles << "\n";
+    out << "\t" << "particle_lifespan (s) : " << particle_lifespan << "\n";
+    out << "\t" << "spawn_radius          : " << spawn_radius << "\n";
+    out << "\t" << "thickness             : " << thickness << "\n";
+    bool_resolution = (active) ? "true" : "false";
+    out << "\t" << "active                : " << bool_resolution << "\n";
+    bool_resolution = (fade) ? "true" : "false";
+    out << "\t" << "fade                  : " << bool_resolution << "\n";
+    out << "\t" << "base_color            : " << "( " << base_color[0] << " , " << base_color[1] << " , " << base_color[2] << " , " << base_color[3] << " )\n";
+    out << std::endl;
 }
 
 

@@ -77,7 +77,7 @@ void render_function();
 void game_loop();
 bool handle_keys(const sf::Event& event);
 void spawn_panda(const char* model_file);
-void spawn_emitter(const char* particle_texture_file, const double& lifespan, const uint32_t& spawn_speed);
+void spawn_emitter(const char* particle_texture_file, const double& lifespan, const uint32_t& count_or_speed, const bool& is_count);
 void deactivate_unused();
 
 
@@ -87,15 +87,23 @@ int main(int argc, char* argv[])
     
     spawn_panda("models/panda-model.egg");
     
-    spawn_emitter("textures/particle.png", 10, 50);    // 0
-    spawn_emitter("textures/particle.png", 20, 60);    // 1
-    spawn_emitter("textures/particle.png", 30, 70);    // 2
-    spawn_emitter("textures/particle.png", 30, 80);    // 3
-    spawn_emitter("textures/particle.png", 30, 90);   // 4
-    spawn_emitter("textures/particle.png", 15, 60);    // 5
-    spawn_emitter("textures/particle.png", 30, 60);    // 6
-    spawn_emitter("textures/particle.png", 30, 6000);  // 6
-    spawn_emitter("textures/particle.png", 30000, 60); // 7
+    // NUM PARTICLES = lifespan (seconds) * spawnspeed (particles / second)
+    
+    spawn_emitter("textures/particle.png", 10   , 50  , false); // 0
+    spawn_emitter("textures/particle.png", 20   , 60  , false); // 1
+    spawn_emitter("textures/particle.png", 30   , 70  , false); // 2
+    spawn_emitter("textures/particle.png", 30   , 80  , false); // 3
+    spawn_emitter("textures/particle.png", 30   , 90  , false); // 4
+    spawn_emitter("textures/particle.png", 15   , 60  , false); // 5
+    spawn_emitter("textures/particle.png", 30   , 60  , false); // 6
+    spawn_emitter("textures/particle.png", 30   , 6000, false); // 6
+    spawn_emitter("textures/particle.png", 30000, 60  , false); // 7
+    
+    //spawn_emitter("textures/particle.png", 10   , 10    , true); // 0
+    //spawn_emitter("textures/particle.png", 10   , 100   , true); // 1
+    //spawn_emitter("textures/particle.png", 10   , 1000  , true); // 2
+    //spawn_emitter("textures/particle.png", 10   , 10000 , true); // 3
+    //spawn_emitter("textures/particle.png", 10   , 100000, true); // 4
     
     emitters[0].set_base_color(1.0f,1.0f,1.0f,1.0f); // WHITE    (EMITTER0)
     emitters[1].set_base_color(0.0f,1.0f,0.0f,1.0f); // GREEN    (EMITTER1)
@@ -359,6 +367,14 @@ bool handle_keys(const sf::Event& event)
             emitters[emitter_index].next_spawn_controller();
         }
     }
+    else if(event.key.code == sf::Keyboard::Num0)
+    {
+        if(!on_models && (!(emitter_index < 0 || emitter_index >= emitters.size())))
+        {
+            //emitters[emitter_index].print_status(std::cout);
+            emitters[emitter_index].print_status(std::cout, emitter_index);
+        }
+    }
     
     return false;
 }
@@ -444,10 +460,10 @@ void spawn_panda(const char* model_file)
 }
 
 // SPAWN A PARTICLE EMITTER
-void spawn_emitter(const char* particle_texture_file, const double& lifespan, const uint32_t& spawn_speed)
+void spawn_emitter(const char* particle_texture_file, const double& lifespan, const uint32_t& count_or_speed, const bool& is_count)
 {
     // SPAWN AN EMITTER (NO CONTROL FUNCTIONS)
-    emitter e(particle_texture_file, lifespan, spawn_speed);
+    emitter e(particle_texture_file, lifespan, count_or_speed, is_count);
     e.set_spawn_radius(4.0f);
     emitters.push_back(e);
 }
